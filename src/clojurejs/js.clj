@@ -481,19 +481,19 @@
   (print "}")
   (doseq [[clause & body] clauses]
     (case clause
-      'catch (let [[evar expr] body]
-               (with-block
-                 (print " catch (")
-                 (emit-symbol evar)
-                 (print ") {")
-                 (with-indent [] (emit-statement expr))
-                 (newline-indent)
-                 (print "}")))
-      'finally (with-block
-                 (print " finally {")
-                 (with-indent [] (doseq [expr body] (emit-statement expr)))
-                 (newline-indent)
-                 (print "}")))))
+      catch (let [[evar expr] body]
+              (with-block
+                (print " catch (")
+                (emit-symbol evar)
+                (print ") {")
+                (with-indent [] (emit-statement expr))
+                (newline-indent)
+                (print "}")))
+      finally (with-block
+                (print " finally {")
+                (with-indent [] (doseq [expr body] (emit-statement expr)))
+                (newline-indent)
+                (print "}")))))
 
 (def *loop-vars* nil)
 (defmethod emit "loop" [[_ bindings & body]]
