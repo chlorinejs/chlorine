@@ -25,14 +25,17 @@
   (is (= (js inc!) "incf"))
   (is (= (js {:foo 1 :bar 2 :baz 3}) "{'foo' : 1,'bar' : 2,'baz' : 3}"))
   (is (= (js [:foo :bar :baz]) "['foo','bar','baz']"))
-  (is (= (js #"^([a-z]*)([0-9]*)") "/^([a-z]*)([0-9]*)/")))
+  (is (= (js #"^([a-z]*)([0-9]*)") "/^([a-z]*)([0-9]*)/"))
+  (is (= (js \newline) "'\n'"))
+  (is (= (js \a) "'a'")))
 
 (deftest functions
   (is (= (js (+ 1 2 3)) "(1 + 2 + 3)"))
   (is (= (js (+ "foo" "bar" "baz")) "(\"foo\" + \"bar\" + \"baz\")"))
   (is (= (js (:test {:test 1 :foo 2 :bar 3}))
          "{'test' : 1,'foo' : 2,'bar' : 3}['test']"))
-  
+  (is (= (js (let [m {:test 1 :foo 2 :bar 3}] (:baz m 4)))
+         "var m = {'test' : 1,'foo' : 2,'bar' : 3}; ('baz' in m ? m['baz'] : 4);"))
   (is (= (js (append '(:foo bar baz) '(quux)))
          "append(['foo','bar','baz'], ['quux'])"))
 
@@ -148,7 +151,7 @@
 (deftest macros
   (is (= (js
           (if (nil? a) (print "is null")))
-         "if ((null == a)) { print(\"is null\"); }")))
+         "if ((null === a)) { print(\"is null\"); }")))
     
 (deftest loops
   (is (= (js
@@ -172,7 +175,7 @@
          "test = function (a) { return console.log(((a > 0) ? a : null)); }")))
 
 (deftest inline-primitives
-  (is (= (js (defn isa? [i c] (inline "return i instanceof c")))
+  (is (= (js (defn isa? [i c] (inline "i instanceof c")))
          "isap = function (i, c) { return i instanceof c; }")))
 
 (deftest try-catch-finally
@@ -184,12 +187,15 @@
                   (console.log ex))
               (finally
                0))))
-         "test = function () { try { return (5 / 0); } catch (ex) { return console.log(ex); } finally { return 0; }; }")))
+         "test = function () { try { return (5 / 0); } catch (ex) { return console.log(ex); } finally { return 0; }; }"))
+
+  (is (= (js (defn test [a] (if (< a 0) (throw (new Error "Negative numbers not accepted")))))
+         "test = function (a) { if ((a < 0)) { throw new Error(\"Negative numbers not accepted\"); }; }")))
 
 (deftest combo
   (is (= (js
           (defn test [a] (if (! (or (boolean? a) (string? a))) (first a))))
-         "test = function (a) { if (!((\"boolean\" == typeof(a)) || (\"string\" == typeof(a)))) { return a[0]; }; }"))
+         "test = function (a) { if (!((\"boolean\" === typeof(a)) || (\"string\" === typeof(a)))) { return a[0]; }; }"))
 
   (is (= (js
           (defn test [a]
@@ -197,14 +203,14 @@
              (symbol? a) "yes"
              (number? a) "no"
              :else "don't know")))
-         "test = function (a) { if (symbolp(a)) { return \"yes\"; } else { if ((\"number\" == typeof(a))) { return \"no\"; } else { return \"don't know\"; }; }; }"))
+         "test = function (a) { if (symbolp(a)) { return \"yes\"; } else { if ((\"number\" === typeof(a))) { return \"no\"; } else { return \"don't know\"; }; }; }"))
 
   (is (= (js
           (defn test [a]
             (cond
              (symbol? a) "yes"
              (number? a) "no")))
-         "test = function (a) { if (symbolp(a)) { return \"yes\"; } else { if ((\"number\" == typeof(a))) { return \"no\"; }; }; }")))
+         "test = function (a) { if (symbolp(a)) { return \"yes\"; } else { if ((\"number\" === typeof(a))) { return \"no\"; }; }; }")))
 
 (declare foo)
 
@@ -260,4 +266,6 @@
   (js-import [foo]
     (expect [foo (times 5)]
       (is (= 123 (js-eval (new (do (foo) Number) (do (foo) 123)))))
-      (is (= 123 (js-eval (do (foo) (new (do (foo) Number) (do (foo) 123)))))))))
+      (is (= 123 (js-eval (do (foo) (new (do (foo) Number) (do (foo) 123))))))
+      
+      (is (= (js (Number. 10)) "new Number(10)")))))

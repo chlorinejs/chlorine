@@ -2,20 +2,20 @@
 ;;; vi: set ft=clojure :
 
 (defmacro apply [fun & args] `(.apply ~fun ~fun ~@args))
-(defmacro true? [expr] `(== true ~expr))
-(defmacro false? [expr] `(== false ~expr))
-(defmacro undefined? [expr] `(== undefined ~expr))
-(defmacro nil? [expr] `(== nil ~expr))
+(defmacro true? [expr] `(=== true ~expr))
+(defmacro false? [expr] `(=== false ~expr))
+(defmacro undefined? [expr] `(=== undefined ~expr))
+(defmacro nil? [expr] `(=== nil ~expr))
 (defmacro count [x] `(inline ~(str (clojurejs.js/emit-str x) ".length")))
-(defmacro empty? [s] `(or (nil? ~s) (== 0 (count ~s))))
+(defmacro empty? [s] `(or (nil? ~s) (=== 0 (count ~s))))
 (defmacro not-empty? [s] `(and ~s (> (count ~s) 0)))
 (defmacro contains? [m k]
   `(inline ~(str (clojurejs.js/emit-str k) " in " (clojurejs.js/emit-str m))))
 (defmacro not [expr] `(! ~expr))
 (defmacro not= [expr1 expr2] `(!= ~expr1 ~expr2))
 (defmacro when [pred & body] `(if ~pred (do ~@body)))
-(defmacro when-not [pred & body] `(if (false? ~pred) (do ~@body)))
-(defmacro unless [pred & body] `(if (false? ~pred) (do ~@body)))
+(defmacro when-not [pred & body] `(if (not ~pred) (do ~@body)))
+(defmacro unless [pred & body] `(if (not ~pred) (do ~@body)))
 (defmacro cond [& [pred consequent & alternates]]
   (if (coll? alternates)
     (if (= (first alternates) :else)
@@ -29,13 +29,21 @@
 (defmacro isa? [a t]
   `(inline ~(str "(" (clojurejs.js/emit-str a) " instanceof " t ")")))
 (defmacro array? [a] `(isa? ~a "Array"))
-(defmacro string? [s] `(== "string" (typeof ~s)))
-(defmacro number? [n] `(== "number" (typeof ~n)))
-(defmacro boolean? [b] `(== "boolean" (typeof ~b)))
+(defmacro string? [s] `(=== "string" (typeof ~s)))
+(defmacro number? [n] `(=== "number" (typeof ~n)))
+(defmacro boolean? [b] `(=== "boolean" (typeof ~b)))
 (defmacro fn? [f] `(== "function" (typeof ~f)))
 (defmacro join [sep seq] `(.join ~seq ~sep))
 (defmacro str [& args] `(+ "" ~@args))
+(defmacro inc [arg] `(+ 1 ~arg))
+(defmacro dec [arg] `(- ~arg 1))
 (defmacro inc! [arg] `(set! ~arg (+ 1 ~arg)))
+(defmacro dec! [arg] `(set! ~arg (- ~arg 1)))
+
+(defmacro delete [arg]
+  `(do
+     (inline ~(str "delete " (clojurejs.js/emit-str arg)))
+     nil))
 
 (defmacro lvar [& bindings]
   `(inline
@@ -47,11 +55,11 @@
 
 (defmacro doseq [[var seq] & body]
   `(do
-     (lvar seq# ~seq ~var nil)
+     (lvar seq# ~seq)
      (loop [i# 0]
        (when (< i# (count seq#))
-         (set! ~var (get seq# i#))
-         ~@body
+         (let [~var (get seq# i#)]
+           ~@body)
          (recur (+ i# 1))))))
 
 (defmacro dotimes [[var n] & body]
@@ -79,10 +87,10 @@
 
 (defn map? [m]
   (let [t (typeof m)]
-    (not (or (== "string" t) (== "number" t) (== "boolean" t) (array? m)))))
+    (not (or (=== "string" t) (=== "number" t) (=== "boolean" t) (array? m)))))
 
 (defn map [fun arr]
-  (loop [r (new Array)
+  (loop [r []
          i 0]
     (if (< i (count arr))
       (do
@@ -100,6 +108,15 @@
         (recur r (+ 1 i)))
       r)))
 
+(defn filter [pred arr]
+  (loop [r []
+         i 0]
+    (if (< i (count arr))
+      (do
+        (if (pred (get arr i)) (.push r (get arr i)))
+        (recur r (+ i 1)))
+      r)))
+
 (defn merge
   "Merge the contents of map `m2' into map `m1' and return a new map."
   [m1 m2]
@@ -109,6 +126,27 @@
              (dokeys [k m2] (if (.hasOwnProperty m2 k) (set! (get m k) (get m2 k))))
              m))
       m1))
+
+(defn select-keys [m ks]
+  (let [m1 {}]
+    (doseq [k ks]
+      (if (.hasOwnProperty m k)
+        (set! (get m1 k) (get m k))))
+    m1))
+
+(defn keys [m]
+  (let [v []]
+    (dokeys [k m]
+      (if (.hasOwnProperty m k)
+        (.push v k)))
+    v))
+
+(defn vals [m]
+  (let [v []]
+    (dokeys [k m]
+      (if (.hasOwnProperty m k)
+        (.push v (get m k))))
+    v))
 
 (defn html-set-attrs [el attrs]
   (dokeys [k attrs] (.setAttribute el k (get attrs k))))
