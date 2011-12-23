@@ -154,14 +154,16 @@
           method? (fn [f] (and (symbol? f) (= \. (first (name f)))))
           invoke-method (fn [[sel recvr & args]]
                           (apply emit-method-call recvr sel args))
+          new-object? (fn [f] (and (symbol? f) (= \. (last (name f)))))
           invoke-fun (fn [fun & args]
                        (with-parens [] (emit fun))
                        (with-parens [] (emit-delimited "," args)))]
       (cond
        (unary-operator? fun) (apply emit-unary-operator form)
        (infix-operator? fun) (apply emit-infix-operator form)
-       (keyword? fun) (emit `(get ~@args ~fun))
+       (keyword? fun) (let [[map & default] args] (emit `(get ~map ~fun ~@default)))
        (method? fun) (invoke-method form)
+       (new-object? fun) (emit `(new ~(symbol (apply str (drop-last (str fun)))) ~@args))
        (coll? fun) (apply invoke-fun form)
        true (apply emit-function-call form)))))
 
@@ -381,7 +383,8 @@
                             (emit-statement consequent)))
                         (newline-indent)
                         (print "}")
-                        (when alternate
+                        ;; alternate might be `0`, which js equates as `nil`
+                        (when-not (nil? alternate)
                           (print " else {")
                           (with-block
                             (with-indent []
@@ -451,6 +454,8 @@
       (if default?
         ;; FIXME Should be able to re-use code for
         ;; inline if and contains? macro here.
+        ;; FIXME Also, `map` will be evaluated twice (once in
+        ;; the `in` test, and once in output of `emit-get`
         (with-parens []
           (print (sym->property key))
           (print " in ")
@@ -524,11 +529,13 @@
 
 (defmethod emit "recur" [[_ & args]]
   (binding [*return-expr* false]
-    (emit-statements (keep identity
-                           (map (fn [lvar val]
-                                  (if-not (= lvar val) `(set! ~lvar ~val)))
-                                *loop-vars*
-                                args))))
+    (let [tmp (tempsym)]
+      (print "var" (emit-str tmp) "= ")
+      (emit-vector args)
+      (println ";")
+      (emit-statements (map (fn [lvar i] `(set! ~lvar (get ~tmp ~i)))
+                            *loop-vars*
+                            (range (count *loop-vars*))))))
   (newline-indent)
   (print "continue"))
 
@@ -545,10 +552,16 @@
     (print "}")))
 
 (defmethod emit "inline" [[_ js]]
-  (print js))
+  (with-return-expr []
+    (print js)))
 
 (defmethod emit "quote" [[_ expr]]
   (binding [*quoted* true]
+    (emit expr)))
+
+(defmethod emit "throw" [[_ expr]]
+  (binding [*return-expr* false]
+    (print "throw ")
     (emit expr)))
 
 (defmethod emit :default [expr]
@@ -562,12 +575,14 @@
        (keyword? expr) (emit-keyword expr)
        (string? expr) (pr expr)
        (symbol? expr) (emit-symbol expr)
+       (char? expr) (print (format "'%c'" expr))
        (and *quoted* (coll? expr)) (emit-vector expr)
        (coll? expr) (emit-function-form expr)
        true (print expr)))))
 
 (defn emit-str [expr]
-  (with-out-str (emit expr)))
+  (binding [*return-expr* false]
+    (with-out-str (emit expr))))
 
 (defn js-emit [expr] (emit expr))
 
@@ -622,15 +637,27 @@ translate the Clojure subset `exprs' to a string of javascript code."
       (js-let ~bindings ~@forms)
       "});"]))
 
+(def *last-sexpr* nil)
+
 (defn tojs [& scripts]
   "Load and translate the list of cljs scripts into javascript, and
 return as a string. Useful for translating an entire cljs script file."
-  (binding [*temp-sym-count* (ref 999)]
+  (binding [*temp-sym-count* (ref 999)
+            *last-sexpr* (ref nil)]
     (with-out-str
       (doseq [f scripts]
-        (with-open [in (sexp-reader f)]
-          (loop [expr (read in false :eof)]
-            (when (not= expr :eof)
-              (if-let [s (emit-statement expr)]
-                (print s))
-              (recur (read in false :eof)))))))))
+        (try
+          (with-open [in (sexp-reader f)]
+            (loop [expr (read in false :eof)]
+              (when (not= expr :eof)
+                (if-let [s (emit-statement expr)]
+                  (print s)
+                  (dosync
+                   (ref-set *last-sexpr* expr)))
+                (recur (read in false :eof)))))
+          (catch Throwable e
+            (throw (new Throwable
+                        (str
+                         "Error translating script " f
+                         " last s-expr " @*last-sexpr*)
+                        e))))))))
