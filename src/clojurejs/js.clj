@@ -85,6 +85,15 @@
                         (print " : ")
                         (emit val))))))
 
+(defn- emit-set [expr]
+  (with-parens ["{" "}"]
+    (binding [*inline-if* true]
+      (emit-delimited ","
+                      (seq expr)
+                      (fn [key]
+                        (emit key)
+                        (print " : true"))))))
+
 (defn- emit-vector [expr]
   (with-parens ["[" "]"]
     (binding [*inline-if* true]
@@ -383,7 +392,8 @@
                             (emit-statement consequent)))
                         (newline-indent)
                         (print "}")
-                        (when alternate
+                        ;; alternate might be `0`, which js equates as `nil`
+                        (when-not (nil? alternate)
                           (print " else {")
                           (with-block
                             (with-indent []
@@ -528,11 +538,13 @@
 
 (defmethod emit "recur" [[_ & args]]
   (binding [*return-expr* false]
-    (emit-statements (keep identity
-                           (map (fn [lvar val]
-                                  (if-not (= lvar val) `(set! ~lvar ~val)))
-                                *loop-vars*
-                                args))))
+    (let [tmp (tempsym)]
+      (print "var" (emit-str tmp) "= ")
+      (emit-vector args)
+      (println ";")
+      (emit-statements (map (fn [lvar i] `(set! ~lvar (get ~tmp ~i)))
+                            *loop-vars*
+                            (range (count *loop-vars*))))))
   (newline-indent)
   (print "continue"))
 
@@ -567,6 +579,7 @@
     (with-return-expr []
       (cond
        (map? expr) (emit-map expr)
+       (set? expr) (emit-set expr)
        (vector? expr) (emit-vector expr)
        (re? expr) (emit-re expr)
        (keyword? expr) (emit-keyword expr)
@@ -578,7 +591,8 @@
        true (print expr)))))
 
 (defn emit-str [expr]
-  (binding [*return-expr* false]
+  (binding [*return-expr* false
+            *inline-if* true]
     (with-out-str (emit expr))))
 
 (defn js-emit [expr] (emit expr))
@@ -634,10 +648,13 @@ translate the Clojure subset `exprs' to a string of javascript code."
       (js-let ~bindings ~@forms)
       "});"]))
 
+(def *last-sexpr* nil)
+
 (defn tojs [& scripts]
   "Load and translate the list of cljs scripts into javascript, and
 return as a string. Useful for translating an entire cljs script file."
-  (binding [*temp-sym-count* (ref 999)]
+  (binding [*temp-sym-count* (ref 999)
+            *last-sexpr* (ref nil)]
     (with-out-str
       (doseq [f scripts]
         (try
@@ -645,7 +662,13 @@ return as a string. Useful for translating an entire cljs script file."
             (loop [expr (read in false :eof)]
               (when (not= expr :eof)
                 (if-let [s (emit-statement expr)]
-                  (print s))
+                  (print s)
+                  (dosync
+                   (ref-set *last-sexpr* expr)))
                 (recur (read in false :eof)))))
           (catch Throwable e
-            (throw (new Throwable (str "Error translating script " f) e))))))))
+            (throw (new Throwable
+                        (str
+                         "Error translating script " f
+                         " last s-expr " @*last-sexpr*)
+                        e))))))))

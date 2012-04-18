@@ -2,16 +2,16 @@
 ;;; vi: set ft=clojure :
 
 (defmacro apply [fun & args] `(.apply ~fun ~fun ~@args))
-(defmacro true? [expr] `(=== true ~expr))
-(defmacro false? [expr] `(=== false ~expr))
-(defmacro undefined? [expr] `(=== undefined ~expr))
-(defmacro nil? [expr] `(=== nil ~expr))
+(defn true? [expr] (=== true expr))
+(defn false? [expr] (=== false expr))
+(defn undefined? [expr] (=== undefined expr))
+(defn nil? [expr] (=== nil expr))
 (defmacro count [x] `(inline ~(str (clojurejs.js/emit-str x) ".length")))
-(defmacro empty? [s] `(or (nil? ~s) (=== 0 (count ~s))))
-(defmacro not-empty? [s] `(and ~s (> (count ~s) 0)))
+(defmacro not [expr] `(! ~expr))
+(defn empty? [s] (or (undefined? s) (nil? s) (=== 0 (count s))))
+(defn not-empty? [s] (not (empty? s)))
 (defmacro contains? [m k]
   `(inline ~(str (clojurejs.js/emit-str k) " in " (clojurejs.js/emit-str m))))
-(defmacro not [expr] `(! ~expr))
 (defmacro not= [expr1 expr2] `(!= ~expr1 ~expr2))
 (defmacro when [pred & body] `(if ~pred (do ~@body)))
 (defmacro when-not [pred & body] `(if (not ~pred) (do ~@body)))
@@ -22,28 +22,25 @@
       `(if ~pred ~consequent ~(second alternates))
       `(if ~pred ~consequent (cond ~@alternates)))
     `(if ~pred ~consequent)))
-(defmacro first [x] `(get ~x 0))
-(defmacro second [x] `(get ~x 1))
-(defmacro third [x] `(get ~x 2))
-(defmacro last [x] `(get ~x (- (count ~x) 1)))
+(defn first [x] (get x 0))
+(defn second [x] (get x 1))
+(defn third [x] (get x 2))
+(defn last [x] (get x (- (count x) 1)))
 (defmacro isa? [a t]
   `(inline ~(str "(" (clojurejs.js/emit-str a) " instanceof " t ")")))
-(defmacro array? [a] `(isa? ~a "Array"))
-(defmacro string? [s] `(=== "string" (typeof ~s)))
-(defmacro number? [n] `(=== "number" (typeof ~n)))
-(defmacro boolean? [b] `(=== "boolean" (typeof ~b)))
-(defmacro fn? [f] `(== "function" (typeof ~f)))
+(defn array? [a] (isa? a "Array"))
+(defn string? [s] (=== "string" (typeof s)))
+(defn number? [n] (=== "number" (typeof n)))
+(defn boolean? [b] (=== "boolean" (typeof b)))
+(defn fn? [f] (== "function" (typeof f)))
 (defmacro join [sep seq] `(.join ~seq ~sep))
-(defmacro str [& args] `(+ "" ~@args))
-(defmacro inc [arg] `(+ 1 ~arg))
-(defmacro dec [arg] `(- ~arg 1))
+(defn str [& args] (.join args ""))
+(defn inc [arg] (+ 1 arg))
+(defn dec [arg] (- arg 1))
 (defmacro inc! [arg] `(set! ~arg (+ 1 ~arg)))
 (defmacro dec! [arg] `(set! ~arg (- ~arg 1)))
 
-(defmacro delete [arg]
-  `(do
-     (inline ~(str "delete " (clojurejs.js/emit-str arg)))
-     nil))
+(defmacro delete [arg] `(inline ~(str "delete " (clojurejs.js/emit-str arg))))
 
 (defmacro lvar [& bindings]
   `(inline
@@ -54,26 +51,35 @@
                  (partition 2 bindings))))))
 
 (defmacro doseq [[var seq] & body]
-  `(do
-     (lvar seq# ~seq)
-     (loop [i# 0]
-       (when (< i# (count seq#))
-         (let [~var (get seq# i#)]
-           ~@body)
-         (recur (+ i# 1))))))
+  (let [seqsym (gensym)]
+    `(do
+       (lvar ~seqsym ~seq)
+       (loop [i# 0]
+         (when (< i# (count ~seqsym))
+           (let [~var (get ~seqsym i#)]
+             ~@body)
+           (recur (+ i# 1)))))))
 
 (defmacro dotimes [[var n] & body]
-  `(do
-     (lvar n# ~n)
-     (loop [~var 0]
-       (when (< ~var n#)
-         ~@body
-         (recur (+ ~var 1))))))
+  (let [nsym (gensym)]
+    `(do
+       (lvar ~nsym ~n)
+       (loop [~var 0]
+         (when (< ~var ~nsym)
+           ~@body
+           (recur (+ ~var 1)))))))
+
+(defn reduce [f val coll]
+  (loop [i 0
+         r val]
+    (if (< i (count coll))
+      (recur (+ i 1) (f r (get coll i)))
+      r)))
 
 (def *gensym* 999)
 (defn gensym []
   (inc! *gensym*)
-  (str "_gensym" *gensym*))
+  (str "G__" *gensym*))
 
 (defn subvec [a s e]
   (let [e (or e (count a))
@@ -86,8 +92,9 @@
         r))))
 
 (defn map? [m]
-  (let [t (typeof m)]
-    (not (or (=== "string" t) (=== "number" t) (=== "boolean" t) (array? m)))))
+  (and m
+       (not (or (contains? #{:string :number :boolean} (typeof m))
+                (array? m)))))
 
 (defn map [fun arr]
   (loop [r []

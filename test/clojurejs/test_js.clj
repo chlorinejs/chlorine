@@ -24,6 +24,7 @@
   (is (= (js foo-bar-baz) "foo_bar_baz"))
   (is (= (js inc!) "incf"))
   (is (= (js {:foo 1 :bar 2 :baz 3}) "{'foo' : 1,'bar' : 2,'baz' : 3}"))
+  (is (= (js #{:foo :bar :baz}) "{'foo' : true,'bar' : true,'baz' : true}"))
   (is (= (js [:foo :bar :baz]) "['foo','bar','baz']"))
   (is (= (js #"^([a-z]*)([0-9]*)") "/^([a-z]*)([0-9]*)/"))
   (is (= (js \newline) "'\n'"))
@@ -148,11 +149,6 @@
          (fn [x y & {z :z}] z))))
   )
 
-(deftest macros
-  (is (= (js
-          (if (nil? a) (print "is null")))
-         "if ((null === a)) { print(\"is null\"); }")))
-    
 (deftest loops
   (is (= (js
           (defn join [arr delim]
@@ -162,7 +158,7 @@
                 (recur (+ str delim (get arr i))
                        (+ i 1))
                 str))))
-         "join = function (arr, delim) { for (var str = arr[0], i = 1; true;) { if ((i < arr.length)) {  str = (str + delim + arr[i]); i = (i + 1); continue; } else { return str; }; break; }; }")))
+         "join = function (arr, delim) { for (var str = arr[0], i = 1; true;) { if ((i < arr.length)) { var _temp_1000 = [(str + delim + arr[i]),(i + 1)];\n str = _temp_1000[0]; i = _temp_1000[1]; continue; } else { return str; }; break; }; }")))
 
 (deftest inline-if
   (is (= (js
@@ -195,7 +191,7 @@
 (deftest combo
   (is (= (js
           (defn test [a] (if (! (or (boolean? a) (string? a))) (first a))))
-         "test = function (a) { if (!((\"boolean\" === typeof(a)) || (\"string\" === typeof(a)))) { return a[0]; }; }"))
+         "test = function (a) { if (!(booleanp(a) || stringp(a))) { return first(a); }; }"))
 
   (is (= (js
           (defn test [a]
@@ -203,14 +199,14 @@
              (symbol? a) "yes"
              (number? a) "no"
              :else "don't know")))
-         "test = function (a) { if (symbolp(a)) { return \"yes\"; } else { if ((\"number\" === typeof(a))) { return \"no\"; } else { return \"don't know\"; }; }; }"))
+         "test = function (a) { if (symbolp(a)) { return \"yes\"; } else { if (numberp(a)) { return \"no\"; } else { return \"don't know\"; }; }; }"))
 
   (is (= (js
           (defn test [a]
             (cond
              (symbol? a) "yes"
              (number? a) "no")))
-         "test = function (a) { if (symbolp(a)) { return \"yes\"; } else { if ((\"number\" === typeof(a))) { return \"no\"; }; }; }")))
+         "test = function (a) { if (symbolp(a)) { return \"yes\"; } else { if (numberp(a)) { return \"no\"; }; }; }")))
 
 (declare foo)
 
