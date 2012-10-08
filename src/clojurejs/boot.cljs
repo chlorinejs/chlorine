@@ -1,6 +1,3 @@
-;;; -*- Mode: Clojure -*-
-;;; vi: set ft=clojure :
-
 (defmacro apply [fun & args] `(.apply ~fun ~fun ~@args))
 (defn true? [expr] (=== true expr))
 (defn false? [expr] (=== false expr))
@@ -157,6 +154,27 @@
 
 (defn html-set-attrs [el attrs]
   (dokeys [k attrs] (.setAttribute el k (get attrs k))))
+
+(defmacro . [x [form & more]]
+  (let [dotform (symbol (str "." form))]
+    `(~dotform ~x ~@more)))
+
+(defmacro ..
+  ([x form] `(. ~x ~form))
+  ([x form & more] `(.. (. ~x ~form) ~@more)))
+
+(defmacro ->
+  ([x] x)
+  ([x form] (if (seq? form)
+              (with-meta `(~(first form) ~x ~@(next form)) (meta form))
+              (list form x)))
+  ([x form & more] `(-> (-> ~x ~form) ~@more)))
+
+(defmacro ->>
+  ([x form] (if (seq? form)
+              (with-meta `(~(first form) ~@(next form)  ~x) (meta form))
+              (list form x)))
+  ([x form & more] `(->> (->> ~x ~form) ~@more)))
 
 (defn html [spec]
   (cond
