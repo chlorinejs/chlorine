@@ -281,3 +281,36 @@
          (str "test = function (a) {"
               " if ((a < 0)) {"
               " throw new Error(\"Negative numbers not accepted\"); }; }"))))
+
+(deftest combo
+  (is (= (js
+          (defn test [a] (if (! (or (boolean? a) (string? a))) (first a))))
+         (str "test = function (a) {"
+              " if (!(booleanp(a) || stringp(a))) {"
+              " return first(a); }; }")))
+
+  (is (= (js
+          (defn test [a]
+            (cond
+             (symbol? a) "yes"
+             (number? a) "no"
+             :else "don't know")))
+         (str "test = function (a) {"
+              " if (symbolp(a)) { return \"yes\"; }"
+              " else {"
+              " if (numberp(a)) {"
+              " return \"no\"; }"
+              " else {"
+              " return \"don't know\"; }; }; }")))
+
+  (is (= (js
+          (defn test [a]
+            (cond
+             (symbol? a) "yes"
+             (number? a) "no")))
+         (str "test = function (a) {"
+              " if (symbolp(a)) {"
+              " return \"yes\"; }"
+              " else {"
+              " if (numberp(a)) {"
+              " return \"no\"; }; }; }"))))
