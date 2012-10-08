@@ -1,5 +1,3 @@
-;; js.clj -- a naive Clojure (subset) to javascript translator
-
 (ns clojurejs.js
   (:require [clojure.string :as str])
   (:use [clojure.java.io :only [reader]]
@@ -9,29 +7,29 @@
   "Wrap `source' in a reader suitable to pass to `read'."
   (new java.io.PushbackReader (reader source)))
 
-(defn- unzip [s]
+(defn unzip [s]
   (let [parts (partition 2 s)]
     [(into (empty s) (map first parts))
      (into (empty s) (map second parts))]))
-
-;; (= (unzip [:foo 1 :bar 2 :baz 3]) [[:foo :bar :baz] [1 2 3]])
 
 (defn- re? [expr] (= (class expr) java.util.regex.Pattern))
 
 (def ^:dynamic *inline-if* false)
 (def ^:dynamic *quoted* false)
-
 (def ^:dynamic *print-pretty* false)
+
 (defmacro with-pretty-print [& body]
   `(binding [*print-pretty* true]
      ~@body))
 
 (def ^:dynamic *indent* 0)
+
 (defmacro with-indent [[& increment] & body]
   `(binding [*indent* (+ *indent* (or ~increment 4))]
      ~@body))
 
 (def ^:dynamic *in-block-exp* false)
+
 (defmacro with-block [& body]
   `(binding [*in-block-exp* true]
      ~@body))
@@ -147,15 +145,17 @@
     (with-indent [] (emit-delimited ", " args))))
 
 (def ^:dynamic *return-expr* false)
+
 (defmacro with-return-expr [[& [new-val]] & body]
   `(binding [*return-expr* (if *return-expr*
                              (do
                                (print "return ")
                                false)
                              (or ~new-val false))]
-     ~@body))  
+     ~@body))
 
 (def ^:dynamic *in-fn-toplevel* true)
+
 (defn- emit-function-form [form]
   (binding [*inline-if* true
             *in-fn-toplevel* false]
@@ -203,8 +203,11 @@
     (emit value)))
 
 (def ^:dynamic *macros* (ref {}))
+
 (defn- macro? [n] (and (symbol? n) (contains? @*macros* (name n))))
+
 (defn- get-macro [n] (and (symbol? n) (get @*macros* (name n))))
+
 (defn- undef-macro [n]
   (when (macro? n)
     (when *print-pretty* (println "// undefining macro" n))
@@ -237,6 +240,7 @@
   (and (symbol? n) (.startsWith (name n) "_")))
 
 (def  ^:dynamic *temp-sym-count* nil)
+
 (defn tempsym []
   (dosync
    (ref-set *temp-sym-count* (+ 1 @*temp-sym-count*))
@@ -510,6 +514,7 @@
                 (print "}")))))
 
 (def ^:dynamic *loop-vars* nil)
+
 (defmethod emit "loop" [[_ bindings & body]]
   (let [emit-for-block (fn []
                          (print "for (var ")
@@ -615,8 +620,6 @@ translate the Clojure subset `exprs' to a string of javascript code."
     `(with-out-str
        (emit-statement (list '(~form# ~(vec formals#) ~@exprs) ~@actuals#)))))
 
-;; (print (js ((fn [a] (return (+ a 1))) 1)))
-
 (defmacro script [& forms]
   "Similar to the (js ...) form, but wraps the javascript in a
  [:script ] element, which can be passed to hiccup.core/html."
@@ -648,7 +651,7 @@ translate the Clojure subset `exprs' to a string of javascript code."
       (js-let ~bindings ~@forms)
       "});"]))
 
-(def *last-sexpr* nil)
+(def ^:dynamic *last-sexpr* nil)
 
 (defn tojs [& scripts]
   "Load and translate the list of cljs scripts into javascript, and
