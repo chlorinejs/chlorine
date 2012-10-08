@@ -76,3 +76,10 @@
          "map['key']"))
   (is (= (js (get map .key))
          "map.key")))
+
+(deftest property-access-default
+  (is (= (js (get map :key default))
+         "('key' in map ? map['key'] : default)"))
+
+  (is (= (js (get map .key default))
+         "('key' in map ? map.key : default)")))
