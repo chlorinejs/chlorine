@@ -245,3 +245,13 @@
               " else {"
               " return str; };"
               " break; }; }"))))
+
+(deftest inline-if
+  (is (= (js
+          (defn test [a]
+            ((if (> a 0) minus plus) a 1)))
+         "test = function (a) { return (((a > 0) ? minus : plus))(a,1); }"))
+
+  ;; implicit `null` alternate
+  (is (= (js (defn test [a] (console.log (if (> a 0) a))))
+         "test = function (a) { return console.log(((a > 0) ? a : null)); }")))
