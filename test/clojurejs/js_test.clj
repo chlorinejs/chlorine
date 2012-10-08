@@ -255,3 +255,29 @@
   ;; implicit `null` alternate
   (is (= (js (defn test [a] (console.log (if (> a 0) a))))
          "test = function (a) { return console.log(((a > 0) ? a : null)); }")))
+
+(deftest inline-primitives
+  (is (= (js (defn isac? [i c] (inline "i instanceof c")))
+         "isacp = function (i, c) { return i instanceof c; }")))
+
+(deftest try-catch-finally
+  (is (= (js
+          (defn test []
+            (try
+              (/ 5 0)
+              (catch ex
+                  (console.log ex))
+              (finally
+               0))))
+         (str "test = function () {"
+              " try { return (5 / 0); } catch (ex) {"
+              " return console.log(ex); }"
+              " finally {"
+              " return 0; }; }")))
+
+  (is (= (js
+          (defn test [a]
+            (if (< a 0) (throw (new Error "Negative numbers not accepted")))))
+         (str "test = function (a) {"
+              " if ((a < 0)) {"
+              " throw new Error(\"Negative numbers not accepted\"); }; }"))))
