@@ -68,3 +68,11 @@
               " log((a * a));;"
               "  log(\"test\");"
               " return (1 + 1);; }"))))
+
+(deftest property-access
+  (is (= (js (get map :key))
+         "map['key']"))
+  (is (= (js (:key map))
+         "map['key']"))
+  (is (= (js (get map .key))
+         "map.key")))
