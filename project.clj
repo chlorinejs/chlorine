@@ -1,11 +1,5 @@
-(defproject org.clojars.kriyative/clojurejs "1.2.18"
+(defproject clojurejs "1.4.0"
   :description "A naive Clojure to Javascript translator"
-  :url "http://github.com/kriyative/clojurejs"
-  :dependencies [[org.clojure/clojure "1.2.0"]
-                 [org.clojure/clojure-contrib "1.2.0"]]
-  :dev-dependencies [[swank-clojure "1.2.1"]
-                     [lein-clojars "0.5.0"]
-                     [lein-difftest "1.3.1"]
-                     [rhino/js "1.7R2"]]
-  :hooks [leiningen.hooks.difftest]
-  :test-path "test")
+  :url "http://github.com/myguidingstar/clojurejs"
+  :dependencies [[org.clojure/clojure "1.4.0"]
+                 [evaljs "0.1.2"]])
