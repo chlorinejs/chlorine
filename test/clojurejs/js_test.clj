@@ -314,3 +314,12 @@
               " else {"
               " if (numberp(a)) {"
               " return \"no\"; }; }; }"))))
+
+(deftest js-let-test
+  (is (= (js-let [a 2 b 3] (+ a b))
+         " (function (a, b) { return (a + b); })(2,3);")))
+
+(deftest let-js-test
+  (is (= (let-js [foo 1]
+                 `(def x ~foo))
+         "var x = 1")))

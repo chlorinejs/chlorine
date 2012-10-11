@@ -620,6 +620,13 @@ translate the Clojure subset `exprs' to a string of javascript code."
     `(with-out-str
        (emit-statement (list '(~form# ~(vec formals#) ~@exprs) ~@actuals#)))))
 
+(defmacro let-js [bindings quoted-expr]
+  "Bind Clojure environment values to named vars of a quoted cljs block, and
+translate the Clojure subset `exprs' to a string of javascript code."
+  (let [body# `(let ~bindings ~quoted-expr)]
+    `(with-out-str
+       (js-emit ~body#))))
+
 (defmacro script [& forms]
   "Similar to the (js ...) form, but wraps the javascript in a
  [:script ] element, which can be passed to hiccup.core/html."
