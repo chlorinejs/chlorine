@@ -1,12 +1,17 @@
 (ns clojurejs.test
   (:use [clojurejs.js]
         [evaljs.core]
-        [evaljs.rhino]))
+        [evaljs.rhino]
+        [clojurejs.util]))
 
-(def boot-js (tojs "src/clojurejs/boot.cljs"))
+(def boot-js (tojs (resource-file "private/boot.cljs")))
 
 (defmacro js-eval [& body]
   `(with-context (rhino-context)
+             (evaljs (js ~@body))))
+
+(defmacro js-eval-context [m & body]
+  `(with-context (rhino-context m)
              (evaljs (js ~@body))))
 
 (defmacro js-eval-with-boot-js [& body]
