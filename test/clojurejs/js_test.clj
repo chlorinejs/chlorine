@@ -1,12 +1,13 @@
 (ns clojurejs.js-test
   (:use [clojurejs.js]
-        [clojure.test]))
+        [clojure.test]
+        [clojurejs.util]))
 
 (deftest unzip-test
   (is (= (unzip [:foo 1 :bar 2 :baz 3])
          [[:foo :bar :baz] [1 2 3]])))
 
-(tojs "src/clojurejs/boot.cljs")
+(tojs (resource-file "private/boot.cljs"))
 
 (deftest literals
   (is (= (js *print-pretty*) "__print_pretty__"))
