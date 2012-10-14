@@ -330,7 +330,14 @@
       (fn [[vname val]]
         (emit-binding vname val)))))
 
+(declare emit-function-1)
+
 (defn- emit-function [fdecl]
+  (if (symbol? (first fdecl))
+    (emit-function-1 (first fdecl) (rest fdecl))
+    (emit-function-1 nil fdecl)))
+
+(defn- emit-function-1 [fname fdecl]
   (let [docstring (if (string? (first fdecl))
                     (first fdecl)
                     nil)
@@ -353,7 +360,9 @@
           (emit-binding args '(Array.prototype.slice.call arguments))
           (print ";")))
       (do
-        (print "function (")
+        (print "function ")
+        (if fname (print fname ""))
+        (print "(")
         (binding [*return-expr* false] (emit-delimited ", " args))
         (print ") {")))
     (with-indent []
