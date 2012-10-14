@@ -264,6 +264,17 @@
   (is (= (js (defn isac? [i c] (inline "i instanceof c")))
          "isacp = function (i, c) { return i instanceof c; }")))
 
+(deftest case-tests
+  (is (= (js (case answer 42 (bingo)))
+         "switch (answer) { case 42: bingo(); }"))
+  (is (= (js (case answer (+ 10 20) (bingo)))
+         "switch (answer) { case (10 + 20): bingo(); }"))
+  (is (= (js (case answer 1 :one 2 :two :anything-else))
+         (str  "switch (answer) {"
+               " case 1: 'one';"
+               " case 2: 'two';"
+               " default: 'anything-else'; }"))))
+
 (deftest try-catch-finally
   (is (= (js
           (defn test []
