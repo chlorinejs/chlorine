@@ -3,6 +3,8 @@
         [clojure.test]
         [clojurejs.util]))
 
+(dosync (ref-set *macros* {}))
+
 (deftest unzip-test
   (is (= (unzip [:foo 1 :bar 2 :baz 3])
          [[:foo :bar :baz] [1 2 3]])))
@@ -296,39 +298,6 @@
          (str "test = function (a) {"
               " if ((a < 0)) {"
               " throw new Error(\"Negative numbers not accepted\"); }; }"))))
-
-(deftest combo
-  (is (= (js
-          (defn test [a] (if (! (or (boolean? a) (string? a))) (first a))))
-         (str "test = function (a) {"
-              " if (!(boolean___p(a) || string___p(a))) {"
-              " return first(a); }; }")))
-
-  (is (= (js
-          (defn test [a]
-            (cond
-             (symbol? a) "yes"
-             (number? a) "no"
-             :else "don't know")))
-         (str "test = function (a) {"
-              " if (symbol___p(a)) { return \"yes\"; }"
-              " else {"
-              " if (number___p(a)) {"
-              " return \"no\"; }"
-              " else {"
-              " return \"don't know\"; }; }; }")))
-
-  (is (= (js
-          (defn test [a]
-            (cond
-             (symbol? a) "yes"
-             (number? a) "no")))
-         (str "test = function (a) {"
-              " if (symbol___p(a)) {"
-              " return \"yes\"; }"
-              " else {"
-              " if (number___p(a)) {"
-              " return \"no\"; }; }; }"))))
 
 (deftest js-let-test
   (is (= (js-let [a 2 b 3] (+ a b))

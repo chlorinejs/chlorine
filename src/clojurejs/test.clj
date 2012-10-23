@@ -4,7 +4,8 @@
         [evaljs.rhino]
         [clojurejs.util]))
 
-(def boot-js (tojs (resource-file "private/boot.cljs")))
+(def boot-js
+  (str (tojs (resource-file "private/boot.cljs"))))
 
 (defmacro js-eval [& body]
   `(with-context (rhino-context)
