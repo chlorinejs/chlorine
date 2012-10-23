@@ -11,9 +11,9 @@
 
 (deftest literals
   (is (= (js *print-pretty*) "__print_pretty__"))
-  (is (= (js number?) "numberp"))
+  (is (= (js number?) "number___p"))
   (is (= (js foo-bar-baz) "foo_bar_baz"))
-  (is (= (js inc!) "incf"))
+  (is (= (js inc!) "inc___f"))
   (is (= (js {:foo 1 :bar 2 :baz 3}) "{'foo' : 1,'bar' : 2,'baz' : 3}"))
   (is (= (js #{:foo :bar :baz}) "{'foo' : true,'bar' : true,'baz' : true}"))
   (is (= (js [:foo :bar :baz]) "['foo','bar','baz']"))
@@ -262,7 +262,7 @@
 
 (deftest inline-primitives
   (is (= (js (defn isac? [i c] (inline "i instanceof c")))
-         "isacp = function (i, c) { return i instanceof c; }")))
+         "isac___p = function (i, c) { return i instanceof c; }")))
 
 (deftest case-tests
   (is (= (js (case answer 42 (bingo)))
@@ -301,7 +301,7 @@
   (is (= (js
           (defn test [a] (if (! (or (boolean? a) (string? a))) (first a))))
          (str "test = function (a) {"
-              " if (!(booleanp(a) || stringp(a))) {"
+              " if (!(boolean___p(a) || string___p(a))) {"
               " return first(a); }; }")))
 
   (is (= (js
@@ -311,9 +311,9 @@
              (number? a) "no"
              :else "don't know")))
          (str "test = function (a) {"
-              " if (symbolp(a)) { return \"yes\"; }"
+              " if (symbol___p(a)) { return \"yes\"; }"
               " else {"
-              " if (numberp(a)) {"
+              " if (number___p(a)) {"
               " return \"no\"; }"
               " else {"
               " return \"don't know\"; }; }; }")))
@@ -324,10 +324,10 @@
              (symbol? a) "yes"
              (number? a) "no")))
          (str "test = function (a) {"
-              " if (symbolp(a)) {"
+              " if (symbol___p(a)) {"
               " return \"yes\"; }"
               " else {"
-              " if (numberp(a)) {"
+              " if (number___p(a)) {"
               " return \"no\"; }; }; }"))))
 
 (deftest js-let-test

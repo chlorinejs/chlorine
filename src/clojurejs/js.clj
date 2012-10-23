@@ -105,7 +105,9 @@
   (print
    (if *quoted*
      (name expr)
-     (apply str (replace {\- "_" \* "__" \? "p" \! "f" \= "_eq"} (name expr)))))
+     (apply str (replace {\- "_" \* "__"
+                          \? "___p" \! "___f"
+                          \= "_eq"} (name expr)))))
   (if *quoted* (print "'")))
 
 (defn- emit-keyword [expr]
