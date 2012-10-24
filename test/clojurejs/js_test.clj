@@ -344,3 +344,4 @@
   (is (= (let-js [foo 1]
                  `(def x ~foo))
          "var x = 1")))
+(js (bit-and 3 4))

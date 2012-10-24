@@ -118,15 +118,28 @@
 
 (defn- infix-operator? [op]
   (and (symbol? op)
-       (contains? #{"and" "or" "+" "-" "/" "*" "%"
+       (contains? #{"and" "or"
+                    "bit-and" "bit-or" "bit-xor" "bit-not"
+                    "bit-shift-left" "bit-shift-right"
+                    "bit-shift-right-zero-fill"
+                    "rem"
+                    "+" "-" "/" "*" "%"
                     ">" ">=" "<" "<=" "==" "===" "!=" "!=="
                     "instanceof"}
                   (name op))))
 
 (defn- emit-infix-operator [op & args]
-  (let [lisp->js {"and" "&&"
-                  "or" "||"}
-        js-op (get lisp->js (name op) (name op))]
+  (let [clj->js {"and"             "&&"
+                 "or"              "||"
+                 "rem"             "%"
+                 "bit-and"         "&"
+                 "bit-or"          "|"
+                 "bit-xor"         "^"
+                 "bit-not"         "~"
+                 "bit-shift-left"  "<<"
+                 "bit-shift-right" ">>"
+                 "bit-shift-right-zero-fill" ">>>"}
+        js-op (get clj->js (name op) (name op))]
     (with-parens []
       (emit-delimited (str " " js-op " ") args))))
 
