@@ -299,11 +299,11 @@
   (is (= (js
            (while (< x 10)
              (inc! x)))
-         "while (x < 10) { x = (1 + x); }"))
+         "while ((x < 10)) { x = (1 + x); }"))
   (is (= (js
            (while (and (< x 10) (> x 5))
              (inc! x)))
-         "while ((x < 10) && (x > 5)) { x = (1 + x); }")))
+         "while (((x < 10) && (x > 5))) { x = (1 + x); }")))
 
 (deftest js-let-test
   (is (= (js-let [a 2 b 3] (+ a b))
@@ -313,12 +313,12 @@
   (is (= (js
            (do-while (< x 10)
              (inc! x)))
-         "do { x = (1 + x); } while (x < 10)"
+         "do { x = (1 + x); } while ((x < 10))"
          ))
   (is (= (js
            (do-while (and (< x 10) (> x 5))
              (inc! x)))
-         "do { x = (1 + x); } while ((x < 10) && (x > 5))")))
+         "do { x = (1 + x); } while (((x < 10) && (x > 5)))")))
 
 (deftest jfor-test
   (is (= (js

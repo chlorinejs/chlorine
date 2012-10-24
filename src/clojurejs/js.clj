@@ -596,9 +596,9 @@
 
 (defmethod emit "while" [[_ test & body]]
   (binding [*return-expr* false]
-    (print "while ")
+    (print "while (")
     (emit test)
-    (print " {")
+    (print ") {")
     (with-indent []
       (emit-statements body))
     (newline-indent)
@@ -611,8 +611,9 @@
       (emit-statements body))
     (newline-indent)
     (print "}")
-    (print " while ")
-    (emit test)))
+    (print " while (")
+    (emit test)
+    (print ")")))
 
 (defmethod emit "jfor" [[_ [init-bindings test update] & body]]
   (let [init (if (vector? init-bindings)
