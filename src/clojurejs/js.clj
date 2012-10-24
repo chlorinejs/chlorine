@@ -134,11 +134,12 @@
                     "not="
                     ;;"!="
                     "!=="
-                    "instanceof"}
+                    "instance?" "instanceof"}
                   (name op))))
 
 (defn- emit-infix-operator [op & args]
-  (let [clj->js {"and"             "&&"
+  (let [clj->js {"instance?"       "instanceof"
+                 "and"             "&&"
                  "or"              "||"
                  "="               "==="
                  "not="            "!=="
