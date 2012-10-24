@@ -123,14 +123,22 @@
                     "bit-shift-left" "bit-shift-right"
                     "bit-shift-right-zero-fill"
                     "rem"
-                    "+" "-" "/" "*" "%"
-                    ">" ">=" "<" "<=" "==" "===" "!=" "!=="
+                    "+" "-" "/" "*"
+                    ">" ">=" "<" "<="
+                    "="
+                    ;;"=="
+                    "==="
+                    "not="
+                    ;;"!="
+                    "!=="
                     "instanceof"}
                   (name op))))
 
 (defn- emit-infix-operator [op & args]
   (let [clj->js {"and"             "&&"
                  "or"              "||"
+                 "="               "==="
+                 "not="            "!=="
                  "rem"             "%"
                  "bit-and"         "&"
                  "bit-or"          "|"
