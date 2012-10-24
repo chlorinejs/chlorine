@@ -102,6 +102,9 @@
      (name expr)
      (apply str (replace {\- "_" \* "__"
                           \? "___p" \! "___f" \' "___q"
+                          \+ "_plus_"
+                          \> "_gt_"
+                          \< "_lt_"
                           \= "___eq"} (name expr)))))
   (if *quoted* (print "'")))
 
