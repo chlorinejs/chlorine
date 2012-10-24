@@ -313,6 +313,17 @@
   (is (= (js-let [a 2 b 3] (+ a b))
          " (function (a, b) { return (a + b); })(2,3);")))
 
+(deftest do-while-test
+  (is (= (js
+           (do-while (< x 10)
+             (inc! x)))
+         "do { x = (1 + x); } while (x < 10)"
+         ))
+  (is (= (js
+           (do-while (and (< x 10) (> x 5))
+             (inc! x)))
+         "do { x = (1 + x); } while ((x < 10) && (x > 5))")))
+
 (deftest let-js-test
   (is (= (let-js [foo 1]
                  `(def x ~foo))

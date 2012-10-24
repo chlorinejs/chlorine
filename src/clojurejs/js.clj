@@ -609,6 +609,16 @@
     (newline-indent)
     (print "}")))
 
+(defmethod emit "do-while" [[_ test & body]]
+  (binding [*return-expr* false]
+    (print "do {")
+    (with-indent []
+      (emit-statements body))
+    (newline-indent)
+    (print "}")
+    (print " while ")
+    (emit test)))
+
 (defmethod emit "inline" [[_ js]]
   (with-return-expr []
     (print js)))
