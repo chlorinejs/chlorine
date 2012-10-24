@@ -599,6 +599,16 @@
     (newline-indent)
     (print "}")))
 
+(defmethod emit "while" [[_ test & body]]
+  (binding [*return-expr* false]
+    (print "while ")
+    (emit test)
+    (print " {")
+    (with-indent []
+      (emit-statements body))
+    (newline-indent)
+    (print "}")))
+
 (defmethod emit "inline" [[_ js]]
   (with-return-expr []
     (print js)))

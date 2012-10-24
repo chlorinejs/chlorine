@@ -299,6 +299,16 @@
               " if ((a < 0)) {"
               " throw new Error(\"Negative numbers not accepted\"); }; }"))))
 
+(deftest while-test
+  (is (= (js
+           (while (< x 10)
+             (inc! x)))
+         "while (x < 10) { x = (1 + x); }"))
+  (is (= (js
+           (while (and (< x 10) (> x 5))
+             (inc! x)))
+         "while ((x < 10) && (x > 5)) { x = (1 + x); }")))
+
 (deftest js-let-test
   (is (= (js-let [a 2 b 3] (+ a b))
          " (function (a, b) { return (a + b); })(2,3);")))
