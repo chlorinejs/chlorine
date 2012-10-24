@@ -1,16 +1,11 @@
 (ns clojurejs.js
   (:require [clojure.string :as str])
   (:use [clojure.java.io :only [reader]]
-        [clojurejs.util :only [assert-args]]))
+        [clojurejs.util :only [unzip assert-args]]))
 
 (defn- sexp-reader [source]
   "Wrap `source' in a reader suitable to pass to `read'."
   (new java.io.PushbackReader (reader source)))
-
-(defn unzip [s]
-  (let [parts (partition 2 s)]
-    [(into (empty s) (map first parts))
-     (into (empty s) (map second parts))]))
 
 (defn- re? [expr] (= (class expr) java.util.regex.Pattern))
 
