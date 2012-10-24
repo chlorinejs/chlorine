@@ -619,6 +619,23 @@
     (print " while ")
     (emit test)))
 
+(defmethod emit "jfor" [[_ [init-bindings test update] & body]]
+  (let [init (if (vector? init-bindings)
+               (concat ['lvar] init-bindings)
+               init-bindings)]
+    (binding [*return-expr* false]
+      (print "for (")
+      (emit init)
+      (print ";")
+      (emit test)
+      (print ";")
+      (emit update)
+      (print ") {")
+      (with-indent []
+        (emit-statements body))
+      (newline-indent)
+      (print "}"))))
+
 (defmethod emit "inline" [[_ js]]
   (with-return-expr []
     (print js)))
