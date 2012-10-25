@@ -134,6 +134,7 @@
                     "not="
                     ;;"!="
                     "!=="
+                    "in"
                     "instance?" "instanceof"}
                   (name op))))
 
