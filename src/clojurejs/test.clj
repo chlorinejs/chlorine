@@ -7,6 +7,9 @@
 (def boot-js
   (str (tojs (resource-file "private/boot.cljs"))))
 
+(defmacro load-boot []
+  `(tojs (resource-file "private/boot.cljs")))
+
 (defmacro js-eval [& body]
   `(with-context (rhino-context)
              (evaljs (js ~@body))))
