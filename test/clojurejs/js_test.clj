@@ -344,3 +344,9 @@
   (is (= (let-js [foo 1]
                  `(def x ~foo))
          "var x = 1")))
+
+(deftest new-and-delete-tests
+  (is (= (js (new bar boo buzz))
+         "new bar(boo,buzz)"))
+  (is (= (js (delete foo))
+         "delete foo")))

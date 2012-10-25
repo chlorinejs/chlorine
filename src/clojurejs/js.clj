@@ -498,6 +498,12 @@
       (emit class)
       (with-parens [] (emit-delimited "," args)))))
 
+(defmethod emit "delete" [[_ item]]
+  (with-return-expr []
+    (binding [*inline-if* true]
+      (print "delete ")
+      (emit item))))
+
 (defmethod emit "return" [[_ value]]
   (print "return ")
   (emit value))
