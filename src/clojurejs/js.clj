@@ -93,7 +93,7 @@
       (emit-delimited "," (seq expr)))))
 
 (defn- emit-re [expr]
-  (print (str "/" (apply str (replace {\/ "\\/"} (str expr))) "/")))
+  (print (str expr)))
 
 (defn- emit-symbol [expr]
   (if *quoted* (print "'"))
