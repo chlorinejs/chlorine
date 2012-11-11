@@ -5,7 +5,7 @@
 
 (dosync (ref-set *macros* {}))
 
-(tojs (resource-file "private/boot.cljs"))
+(tojs (clojure.java.io/resource "private/boot.cljs"))
 
 (deftest literals
   (is (= (js *print-pretty*) "__print_pretty__"))

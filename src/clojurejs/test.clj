@@ -5,10 +5,10 @@
         [clojurejs.util]))
 
 (def boot-js
-  (str (tojs (resource-file "private/boot.cljs"))))
+  (str (tojs (clojure.java.io/resource "private/boot.cljs"))))
 
 (defmacro load-boot []
-  `(tojs (resource-file "private/boot.cljs")))
+  `(tojs (clojure.java.io/resource "private/boot.cljs")))
 
 (defmacro js-eval [& body]
   `(with-context (rhino-context)
