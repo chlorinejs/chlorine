@@ -1,7 +1,9 @@
 (ns clojurejs.js
   (:require [clojure.string :as str])
   (:use [clojure.java.io :only [reader]]
-        [clojurejs.util :only [unzip assert-args]]))
+        [pathetic.core :only [normalize]]
+        [clojurejs.util :only [flatten-files unzip assert-args
+                               *cwd* *cpd* file-and-dir]]))
 
 (defn- sexp-reader [source]
   "Wrap `source' in a reader suitable to pass to `read'."
@@ -50,6 +52,8 @@
   (and (symbol? s) (.startsWith (name s) ".")))
 
 (declare emit-str)
+(declare tojs')
+(declare raw-js)
 
 (defn- sym->property [s]
   "Transforms symbol or keyword into property access form."
@@ -235,6 +239,15 @@
   (when (macro? n)
     (when *print-pretty* (println "// undefining macro" n))
     (dosync (alter *macros* dissoc (name n)))))
+
+(defmethod emit "import!" [[_ & files]]
+  (apply tojs' files))
+
+(defmethod emit "include!" [[_ & files]]
+  (print (str (apply tojs' files))))
+
+(defmethod emit "include-raw!" [[_ & files]]
+  (print (str (apply raw-js files))))
 
 (defmethod emit "defmacro" [[_ mname args & body]]
   (dosync
@@ -759,25 +772,44 @@ translate the Clojure subset `exprs' to a string of javascript code."
 
 (def ^:dynamic *last-sexpr* nil)
 
+(defn raw-js [& scripts]
+  (with-out-str
+    (doseq [script (apply flatten-files scripts)]
+      (let [[file dir] (file-and-dir script)
+            f (if (vector? file)
+                (clojure.java.io/resource
+                 (clojure.string/replace (second file) #"^/" ""))
+                file)]
+        (print (slurp f))))))
+
+(defn tojs' [& scripts]
+  (with-out-str
+    (doseq [script (apply flatten-files scripts)]
+      (let [[file dir] (file-and-dir script)
+            f (if (vector? file)
+                (clojure.java.io/resource
+                 (clojure.string/replace (second file) #"^/" ""))
+                file)]
+        (binding [*cwd* dir]
+          (try
+            (with-open [in (sexp-reader f)]
+              (loop [expr (read in false :eof)]
+                (when (not= expr :eof)
+                  (if-let [s (emit-statement expr)]
+                    (print s)
+                    (dosync
+                     (ref-set *last-sexpr* expr)))
+                  (recur (read in false :eof)))))
+            (catch Throwable e
+              (throw (new Throwable
+                          (str
+                           "Error translating script " f
+                           " last s-expr " @*last-sexpr*)
+                          e)))))))))
+
 (defn tojs [& scripts]
   "Load and translate the list of cljs scripts into javascript, and
 return as a string. Useful for translating an entire cljs script file."
   (binding [*temp-sym-count* (ref 999)
             *last-sexpr* (ref nil)]
-    (with-out-str
-      (doseq [f scripts]
-        (try
-          (with-open [in (sexp-reader f)]
-            (loop [expr (read in false :eof)]
-              (when (not= expr :eof)
-                (if-let [s (emit-statement expr)]
-                  (print s)
-                  (dosync
-                   (ref-set *last-sexpr* expr)))
-                (recur (read in false :eof)))))
-          (catch Throwable e
-            (throw (new Throwable
-                        (str
-                         "Error translating script " f
-                         " last s-expr " @*last-sexpr*)
-                        e))))))))
+    (apply tojs' scripts)))

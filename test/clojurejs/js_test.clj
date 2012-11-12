@@ -5,7 +5,7 @@
 
 (dosync (ref-set *macros* {}))
 
-(tojs (clojure.java.io/resource "private/boot.cljs"))
+(tojs [:resource "/private/boot.cljs"])
 
 (deftest literals
   (is (= (js *print-pretty*) "__print_pretty__"))
@@ -350,3 +350,13 @@
          "new bar(boo,buzz)"))
   (is (= (js (delete foo))
          "delete foo")))
+
+(deftest import-tests
+  (is (= (tojs [:private "/test/import.clj"])
+         " ; 2;"))
+  (is (= (tojs [:private "/test/import-relative.clj"])
+         " ; 4;"))
+  (is (= (tojs [:private "/test/include.clj"])
+         "  dummy_function = function (x) { return (2 + x); };; 2;"))
+  (is (= (tojs [:private "/test/include-raw.clj"])
+         " //Hello world\n1+1\n; (3 + 2);")))
