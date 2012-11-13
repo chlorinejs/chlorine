@@ -1,7 +1,7 @@
-(ns clojurejs.js-test
-  (:use [clojurejs.js]
+(ns chlorine.js-test
+  (:use [chlorine.js]
         [clojure.test]
-        [clojurejs.util]))
+        [chlorine.util]))
 
 (dosync (ref-set *macros* {}))
 

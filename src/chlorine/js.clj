@@ -1,8 +1,8 @@
-(ns clojurejs.js
+(ns chlorine.js
   (:require [clojure.string :as str])
   (:use [clojure.java.io :only [reader]]
         [pathetic.core :only [normalize]]
-        [clojurejs.util :only [flatten-files unzip assert-args
+        [chlorine.util :only [flatten-files unzip assert-args
                                *cwd* *cpd* file-and-dir]]))
 
 (defn- sexp-reader [source]

@@ -5,7 +5,7 @@ test jar::
 
 push: clean
 	lein jar
-	ln -s clojurejs-*.jar clojurejs.jar
+	ln -s chlorine-*.jar chlorine.jar
 	lein push
 
 clean:

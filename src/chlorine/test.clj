@@ -1,8 +1,8 @@
-(ns clojurejs.test
-  (:use [clojurejs.js]
+(ns chlorine.test
+  (:use [chlorine.js]
         [evaljs.core]
         [evaljs.rhino]
-        [clojurejs.util]))
+        [chlorine.util]))
 
 (def boot-js
   (str (tojs [:private "boot.cljs"])))
