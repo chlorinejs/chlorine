@@ -1,3 +1,5 @@
+/target
+/.lein-failures
 *.jar
 pom.xml
 /classes
