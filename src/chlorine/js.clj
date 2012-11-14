@@ -660,7 +660,7 @@
     (emit test)
     (print ")")))
 
-(defmethod emit "jfor" [[_ [init-bindings test update] & body]]
+(defmethod emit "dofor" [[_ [init-bindings test update] & body]]
   (let [init (if (vector? init-bindings)
                (concat ['lvar] init-bindings)
                init-bindings)]

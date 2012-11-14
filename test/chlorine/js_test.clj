@@ -320,22 +320,22 @@
              (inc! x)))
          "do { x = (1 + x); } while (((x < 10) && (x > 5)))")))
 
-(deftest jfor-test
+(deftest dofor-test
   (is (= (js
-           (jfor [(lvar i 0
+           (dofor [(lvar i 0
                         j 1)
                   (< i 5)
                   (inc! i)]
                  1))
          "for (var i = 0,j = 1;(i < 5);i = (1 + i)) { 1; }"))
   (is (= (js
-           (jfor [(def i 0)
+           (dofor [(def i 0)
                   (< i 5)
                   (inc! i)]
                  1))
          "for (var i = 0;(i < 5);i = (1 + i)) { 1; }"))
   (is (= (js
-           (jfor [[i 0 j 1]
+           (dofor [[i 0 j 1]
                   (< i 5)
                   (inc! i)]
                  1)))))
