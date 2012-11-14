@@ -5,7 +5,7 @@
 
 (dosync (ref-set *macros* {}))
 
-(tojs [:resource "/private/boot.cljs"])
+(tojs [:resource "/private/boot.cl2"])
 
 (deftest literals
   (is (= (js *print-pretty*) "__print_pretty__"))
@@ -352,11 +352,11 @@
          "delete foo")))
 
 (deftest import-tests
-  (is (= (tojs [:private "/test/import.clj"])
+  (is (= (tojs [:private "/test/import.cl2"])
          " ; 2;"))
-  (is (= (tojs [:private "/test/import-relative.clj"])
+  (is (= (tojs [:private "/test/import-relative.cl2"])
          " ; 4;"))
-  (is (= (tojs [:private "/test/include.clj"])
+  (is (= (tojs [:private "/test/include.cl2"])
          "  dummy_function = function (x) { return (2 + x); };; 2;"))
-  (is (= (tojs [:private "/test/include-raw.clj"])
+  (is (= (tojs [:private "/test/include-raw.cl2"])
          " //Hello world\n1+1\n; (3 + 2);")))
