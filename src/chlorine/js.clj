@@ -3,7 +3,8 @@
   (:use [clojure.java.io :only [reader]]
         [pathetic.core :only [normalize]]
         [chlorine.util :only [flatten-files unzip assert-args
-                               *cwd* *cpd* file-and-dir]]))
+                               *cwd* *cpd* file-and-dir
+                              replace-map]]))
 
 (defn- sexp-reader [source]
   "Wrap `source' in a reader suitable to pass to `read'."
@@ -104,12 +105,27 @@
   (print
    (if *quoted*
      (name expr)
-     (apply str (replace {\- "_" \* "__"
-                          \? "___p" \! "___f" \' "___q"
-                          \+ "_plus_"
-                          \> "_gt_"
-                          \< "_lt_"
-                          \= "___eq"} (name expr)))))
+     (replace-map (name expr) (array-map
+                               "$"  "$USD$"
+                               "->" "$ARROW$"
+                               "=>" "$BARROW$"
+                               "<-" "$LARROW$"
+                               ">"  "$GT$"
+                               "<"  "$LT$"
+                               ">=" "$GE$"
+                               "=<" "$LE$"
+                               "-"  "_"
+                               "'"   "$QUOT$"
+                               "!"  "$EXCL$"
+                               "?"  "$QUEST$"
+                               "#"  "$HASH$"
+                               "%"  "$P100$"
+                               "&"  "$AND$"
+                               "*"  "$STAR$"
+                               "+"  "$PLUS$"
+                               "="  "$EQ$"
+                               "|"  "$PIPE$"
+                               ))))
   (if *quoted* (print "'")))
 
 (defn- emit-keyword [expr]

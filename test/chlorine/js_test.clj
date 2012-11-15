@@ -8,10 +8,10 @@
 (tojs [:resource "/private/boot.cl2"])
 
 (deftest literals
-  (is (= (js *print-pretty*) "__print_pretty__"))
-  (is (= (js number?) "number___p"))
+  (is (= (js *print-pretty*) "$STAR$print_pretty$STAR$"))
+  (is (= (js number?) "number$QUEST$"))
   (is (= (js foo-bar-baz) "foo_bar_baz"))
-  (is (= (js inc!) "inc___f"))
+  (is (= (js inc!) "inc$EXCL$"))
   (is (= (js {:foo 1 :bar 2 :baz 3}) "{'foo' : 1,'bar' : 2,'baz' : 3}"))
   (is (= (js #{:foo :bar :baz}) "{'foo' : true,'bar' : true,'baz' : true}"))
   (is (= (js [:foo :bar :baz]) "['foo','bar','baz']"))
@@ -260,7 +260,7 @@
 
 (deftest inline-primitives
   (is (= (js (defn isac? [i c] (inline "i instanceof c")))
-         "isac___p = function (i, c) { return i instanceof c; }")))
+         "isac$QUEST$ = function (i, c) { return i instanceof c; }")))
 
 (deftest case-tests
   (is (= (js (case answer 42 (bingo)))
