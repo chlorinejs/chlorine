@@ -382,14 +382,14 @@
       (fn [[vname val]]
         (emit-binding vname val)))))
 
-(declare emit-function-1)
+(declare emit-function)
 
-(defn- emit-function [fdecl]
+(defn- emit-function-name [fdecl]
   (if (symbol? (first fdecl))
-    (emit-function-1 (first fdecl) (rest fdecl))
-    (emit-function-1 nil fdecl)))
+    (emit-function (first fdecl) (rest fdecl))
+    (emit-function nil fdecl)))
 
-(defn- emit-function-1 [fname fdecl]
+(defn- emit-function [fname fdecl]
   (let [docstring (if (string? (first fdecl))
                     (first fdecl)
                     nil)
@@ -413,7 +413,7 @@
           (print ";")))
       (do
         (print "function ")
-        (if fname (print fname ""))
+        (if fname (do (emit-symbol fname) (print " ")))
         (print "(")
         (binding [*return-expr* false] (emit-delimited ", " args))
         (print ") {")))
@@ -427,7 +427,7 @@
 
 (defmethod emit "fn" [[_ & fdecl]]
   (with-return-expr []
-    (with-block (emit-function fdecl))))
+    (with-block (emit-function-name fdecl))))
 
 (defmethod emit "defn" [[_ name & fdecl]]
   (assert-args defn (symbol? name) "a symbol as its name")
@@ -435,7 +435,7 @@
   (emit-symbol name)
   (print " = ")
   (with-block
-    (emit-function fdecl)))
+    (emit-function-name fdecl)))
 
 (defmethod emit "if" [[_ test consequent & [alternate]]]
   (let [emit-inline-if (fn []
