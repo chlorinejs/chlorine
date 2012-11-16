@@ -1,5 +1,7 @@
 # Chlorine
 
+[![Build Status](https://api.travis-ci.org/myguidingstar/chlorine.png)](https://travis-ci.org/myguidingstar/chlorine)
+
 Chlorine (formerly Clojurejs) is a naive implementation of a Clojure subset language to Javascript translator. Chlorine is an attempt to implement the predictable semantics in the generated Javascript. Some of its features are:
 
 * Consistent scoping in ``let`` and ``loop/recur`` forms
