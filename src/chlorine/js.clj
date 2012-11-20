@@ -15,6 +15,28 @@
 (def ^:dynamic *inline-if* false)
 (def ^:dynamic *quoted* false)
 (def ^:dynamic *print-pretty* false)
+(def ^:dynamic *symbol-map*
+  (array-map
+   "$"  "$USD$"
+   "->" "$ARROW$"
+   "=>" "$BARROW$"
+   "<-" "$LARROW$"
+   ">"  "$GT$"
+   "<"  "$LT$"
+   ">=" "$GE$"
+   "=<" "$LE$"
+   "-"  "_"
+   "'"   "$QUOT$"
+   "!"  "$EXCL$"
+   "?"  "$QUEST$"
+   "#"  "$HASH$"
+   "%"  "$P100$"
+   "&"  "$AND$"
+   "*"  "$STAR$"
+   "+"  "$PLUS$"
+   "="  "$EQ$"
+   "|"  "$PIPE$"
+   ))
 
 (defmacro with-pretty-print [& body]
   `(binding [*print-pretty* true]
@@ -100,33 +122,14 @@
 (defn- emit-re [expr]
   (print (str expr)))
 
-(defn- emit-symbol [expr]
-  (if *quoted* (print "'"))
-  (print
-   (if *quoted*
-     (name expr)
-     (replace-map (name expr) (array-map
-                               "$"  "$USD$"
-                               "->" "$ARROW$"
-                               "=>" "$BARROW$"
-                               "<-" "$LARROW$"
-                               ">"  "$GT$"
-                               "<"  "$LT$"
-                               ">=" "$GE$"
-                               "=<" "$LE$"
-                               "-"  "_"
-                               "'"   "$QUOT$"
-                               "!"  "$EXCL$"
-                               "?"  "$QUEST$"
-                               "#"  "$HASH$"
-                               "%"  "$P100$"
-                               "&"  "$AND$"
-                               "*"  "$STAR$"
-                               "+"  "$PLUS$"
-                               "="  "$EQ$"
-                               "|"  "$PIPE$"
-                               ))))
-  (if *quoted* (print "'")))
+(defn emit-symbol
+  ([expr]
+     (if *quoted* (print "'"))
+     (print
+      (if *quoted*
+        (name expr)
+        (replace-map (name expr) *symbol-map*)))
+     (if *quoted* (print "'"))))
 
 (defn- emit-keyword [expr]
   (binding [*quoted* true]
