@@ -777,9 +777,11 @@ translate the Clojure subset `exprs' to a string of javascript code."
             f (if (vector? file)
                 (clojure.java.io/resource
                  (clojure.string/replace (second file) #"^/" ""))
-                file)]
+                (when (.isFile (clojure.java.io/file file))
+                  file))]
         (binding [*cwd* dir]
           (try
+            (if (nil? f) (throw (Exception. "File not found!")))
             (with-open [in (sexp-reader f)]
               (loop [expr (read in false :eof)]
                 (when (not= expr :eof)
