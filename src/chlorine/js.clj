@@ -408,7 +408,9 @@
       (vector? args) "a vector for its bindings")
     (if dargs?
       (do
-        (print "function () {")
+        (print "function ")
+        (if fname (do (emit-symbol fname) (print " ")))
+        (print "() {")
         (with-indent []
           (newline-indent)
           (print "var ")
