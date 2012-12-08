@@ -5,8 +5,6 @@
 
 (dosync (ref-set *macros* {}))
 
-(tojs [:resource "/private/boot.cl2"])
-
 (deftest literals
   (is (= (js *print-pretty*) "$STAR$print_pretty$STAR$"))
   (is (= (js number?) "number$QUEST$"))
@@ -295,50 +293,9 @@
               " if ((a < 0)) {"
               " throw new Error(\"Negative numbers not accepted\"); }; }"))))
 
-(deftest while-test
-  (is (= (js
-           (while (< x 10)
-             (inc! x)))
-         "while ((x < 10)) { x = (1 + x); }"))
-  (is (= (js
-           (while (and (< x 10) (> x 5))
-             (inc! x)))
-         "while (((x < 10) && (x > 5))) { x = (1 + x); }")))
-
 (deftest js-let-test
   (is (= (js-let [a 2 b 3] (+ a b))
          " (function (a, b) { return (a + b); })(2,3);")))
-
-(deftest do-while-test
-  (is (= (js
-           (do-while (< x 10)
-             (inc! x)))
-         "do { x = (1 + x); } while ((x < 10))"
-         ))
-  (is (= (js
-           (do-while (and (< x 10) (> x 5))
-             (inc! x)))
-         "do { x = (1 + x); } while (((x < 10) && (x > 5)))")))
-
-(deftest dofor-test
-  (is (= (js
-           (dofor [(lvar i 0
-                        j 1)
-                  (< i 5)
-                  (inc! i)]
-                 1))
-         "for (var i = 0,j = 1;(i < 5);i = (1 + i)) { 1; }"))
-  (is (= (js
-           (dofor [(def i 0)
-                  (< i 5)
-                  (inc! i)]
-                 1))
-         "for (var i = 0;(i < 5);i = (1 + i)) { 1; }"))
-  (is (= (js
-           (dofor [[i 0 j 1]
-                  (< i 5)
-                  (inc! i)]
-                 1)))))
 
 (deftest let-js-test
   (is (= (let-js [foo 1]
@@ -350,13 +307,3 @@
          "new bar(boo,buzz)"))
   (is (= (js (delete foo))
          "delete foo")))
-
-(deftest import-tests
-  (is (= (tojs [:private "/test/import.cl2"])
-         " ; 2;"))
-  (is (= (tojs [:private "/test/import-relative.cl2"])
-         " ; 4;"))
-  (is (= (tojs [:private "/test/include.cl2"])
-         "  dummy_function = function (x) { return (2 + x); };; 2;"))
-  (is (= (tojs [:private "/test/include-raw.cl2"])
-         " //Hello world\n1+1\n; (3 + 2);")))
