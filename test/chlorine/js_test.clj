@@ -18,8 +18,8 @@
   (is (= (js \a) "'a'")))
 
 (deftest functions
-  (is (= (js (+ 1 2 3)) "(1 + 2 + 3)"))
-  (is (= (js (+ "foo" "bar" "baz")) "(\"foo\" + \"bar\" + \"baz\")"))
+  (is (= (js (+* 1 2 3)) "(1 + 2 + 3)"))
+  (is (= (js (+* "foo" "bar" "baz")) "(\"foo\" + \"bar\" + \"baz\")"))
   (is (= (js (:test {:test 1 :foo 2 :bar 3}))
          "{'test' : 1,'foo' : 2,'bar' : 3}['test']"))
   (is (= (js (let [m {:test 1 :foo 2 :bar 3}] (:baz m 4)))
@@ -28,24 +28,24 @@
   (is (= (js (append '(:foo bar baz) '(quux)))
          "append(['foo','bar','baz'], ['quux'])"))
 
-  (is (= (js (fn [a b] (+ a b)))
+  (is (= (js (fn [a b] (+* a b)))
          "function (a, b) { return (a + b); }"))
 
-  (is (= (js (fn foo [a b] (+ a b)))
+  (is (= (js (fn foo [a b] (+* a b)))
          "function foo (a, b) { return (a + b); }"))
 
-  (is (= (with-pretty-print (js (fn "Some func does stuff" [x] (+ x 1))))
+  (is (= (with-pretty-print (js (fn "Some func does stuff" [x] (+* x 1))))
          (str "function (x) {\n"
               "    /* Some func does stuff */\n"
               "    return (x + 1);\n}")))
 
-  (is (= (with-pretty-print (js (fn "Some func\ndoes stuff" [x] (+ x 1))))
+  (is (= (with-pretty-print (js (fn "Some func\ndoes stuff" [x] (+* x 1))))
          (str "function (x) {\n"
               "    /* Some func\n"
               "       does stuff */\n"
               "    return (x + 1);\n}")))
 
-  (is (= (js (defn foo [a b] (+ a b)))
+  (is (= (js (defn foo [a b] (+* a b)))
          "foo = function (a, b) { return (a + b); }"))
 
   (is (= (js (defn foo [c] (.methodOf c)))
@@ -53,16 +53,16 @@
 
   (is (= (js
           (defn test []
-            (let [a 1] (log (* a a)))
-            (let [a 2] (log (* a a)))))
+            (let [a 1] (log (** a a)))
+            (let [a 2] (log (** a a)))))
          (str "test = function () { var a = 1;"
               " log((a * a));;"
               " var a = 2;"
               " return log((a * a));; }")))
   (is (= (js
           (defn test []
-            (let [a 1] (log (* a a)))
-            (do (log "test") (+ 1 1))))
+            (let [a 1] (log (** a a)))
+            (do (log "test") (+* 1 1))))
          (str "test = function () {"
               " var a = 1;"
               " log((a * a));;"
@@ -88,9 +88,9 @@
   (is (= (js
           (defn test []
             (let [a 1
-                  b (+ a 1)
-                  c (+ b 1)]
-              (+ a b c))))
+                  b (+* a 1)
+                  c (+* b 1)]
+              (+* a b c))))
          (str "test = function () {"
               " var a = 1, b = (a + 1), c = (b + 1);"
               " return (a + b + c);; }")))
@@ -99,7 +99,7 @@
   (is (= (js
           (defn test []
             (let [[a b & r] [1 2 3 4]]
-              [(+ a b) r])))
+              [(+* a b) r])))
          (str "test = function () {"
               " var _temp_1000 = [1,2,3,4],"
               " a = _temp_1000[0],"
@@ -109,7 +109,7 @@
 
   (is (= (js
           (defn test [[a b & r]]
-            [(+ a b) r]))
+            [(+* a b) r]))
          (str "test = function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " _temp_1001 = _temp_1000[0],"
@@ -120,7 +120,7 @@
 
   (is (= (js
           (defn test [a b & r]
-            [(+ a b) r]))
+            [(+* a b) r]))
          (str "test = function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " a = _temp_1000[0],"
@@ -232,8 +232,8 @@
             (loop [str (get arr 0)
                    i 1]
               (if (< i (get arr .length))
-                (recur (+ str delim (get arr i))
-                       (+ i 1))
+                (recur (+* str delim (get arr i))
+                       (+* i 1))
                 str))))
          (str "join = function (arr, delim) {"
               " for (var str = arr[0], i = 1; true;) {"
@@ -263,7 +263,7 @@
 (deftest case-tests
   (is (= (js (case answer 42 (bingo)))
          "switch (answer) { case 42: bingo(); }"))
-  (is (= (js (case answer (+ 10 20) (bingo)))
+  (is (= (js (case answer (+* 10 20) (bingo)))
          "switch (answer) { case (10 + 20): bingo(); }"))
   (is (= (js (case answer 1 :one 2 :two :anything-else))
          (str  "switch (answer) {"
@@ -294,7 +294,7 @@
               " throw new Error(\"Negative numbers not accepted\"); }; }"))))
 
 (deftest js-let-test
-  (is (= (js-let [a 2 b 3] (+ a b))
+  (is (= (js-let [a 2 b 3] (+* a b))
          " (function (a, b) { return (a + b); })(2,3);")))
 
 (deftest let-js-test
@@ -307,3 +307,17 @@
          "new bar(boo,buzz)"))
   (is (= (js (delete foo))
          "delete foo")))
+
+(deftest with-profile-tests
+  (is (= (with-profile {:print-pretty 3 :symbol-map {"a" "b"}}
+           (str "pp is " *print-pretty*))
+         "pp is 3"))
+  (is (= (let [some-profile {:print-pretty true}]
+           (with-profile some-profile
+             (js (fn "Some func does stuff" [x] (+* x 1)))))
+         (str "function (x) {\n"
+              "    /* Some func does stuff */\n"
+              "    return (x + 1);\n}")))
+  (is (= (with-profile {:symbol-map {"x" "y"}}
+           (js (fn "Some func does stuff" [x] (+* x 1))))
+         "function (y) { return (y + 1); }")))
