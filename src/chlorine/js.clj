@@ -17,6 +17,7 @@
 (def ^:dynamic *print-pretty* false)
 (def ^:dynamic *symbol-map*
   (array-map
+   #"^int$" "int*"
    "$"  "$USD$"
    "->" "$ARROW$"
    "=>" "$BARROW$"
