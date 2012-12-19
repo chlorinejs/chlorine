@@ -279,6 +279,13 @@
           {(name mname) (eval `(clojure.core/fn ~args ~@body))}))
   nil)
 
+(defmacro borrow-macros [& syms]
+  (for [sym syms]
+    `(dosync (alter *macros* conj
+                    {~(name sym)
+                     (fn [& args#]
+                       (apply ~(resolve sym) (concat [nil nil] args#)))}))))
+
 (defn- emit-macro-expansion [form]
   (let [[mac-name & args] form
         mac (get-macro mac-name)
@@ -546,10 +553,6 @@
   (print "return ")
   (emit value))
 
-(defmethod emit 'nil [_]
-  (with-return-expr []
-    (print "null")))
-
 (defmethod emit "get" [args]
   (let [[_ map key default]  args
         default? (> (count args) 3)
@@ -730,7 +733,9 @@
        (char? expr) (print (format "'%c'" expr))
        (and *quoted* (coll? expr)) (emit-vector expr)
        (coll? expr) (emit-function-form expr)
-       true (print expr)))))
+       (nil? expr) (print "null")
+       true (print expr)
+       ))))
 
 (defn emit-str [expr]
   (binding [*return-expr* false
