@@ -307,17 +307,3 @@
          "new bar(boo,buzz)"))
   (is (= (js (delete foo))
          "delete foo")))
-
-(deftest with-profile-tests
-  (is (= (with-profile {:print-pretty 3 :symbol-map {"a" "b"}}
-           (str "pp is " *print-pretty*))
-         "pp is 3"))
-  (is (= (let [some-profile {:print-pretty true}]
-           (with-profile some-profile
-             (js (fn "Some func does stuff" [x] (+* x 1)))))
-         (str "function (x) {\n"
-              "    /* Some func does stuff */\n"
-              "    return (x + 1);\n}")))
-  (is (= (with-profile {:symbol-map {"x" "y"}}
-           (js (fn "Some func does stuff" [x] (+* x 1))))
-         "function (y) { return (y + 1); }")))

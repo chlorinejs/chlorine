@@ -124,12 +124,13 @@
 
 (defn emit-symbol
   ([expr]
-     (if *quoted* (print "'"))
-     (print
-      (if *quoted*
-        (name expr)
-        (replace-map (name expr) *symbol-map*)))
-     (if *quoted* (print "'"))))
+     (let [sym (name expr)]
+       (print
+        (if *quoted*
+          (str "'" (name expr) "'")
+          (if (reserved-symbol? *reserved-symbols* sym)
+            sym
+            (replace-map sym *symbol-map*)))))))
 
 (defn- emit-keyword [expr]
   (binding [*quoted* true]
