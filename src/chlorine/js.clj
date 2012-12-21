@@ -4,17 +4,16 @@
         [pathetic.core :only [normalize]]
         [chlorine.util :only [flatten-files unzip assert-args
                                *cwd* *cpd* file-and-dir
-                              replace-map]]))
+                              re? reserved-symbol? replace-map]]))
 
 (defn- sexp-reader [source]
   "Wrap `source' in a reader suitable to pass to `read'."
   (new java.io.PushbackReader (reader source)))
 
-(defn- re? [expr] (= (class expr) java.util.regex.Pattern))
-
 (def ^:dynamic *inline-if* false)
 (def ^:dynamic *quoted* false)
 (def ^:dynamic *print-pretty* false)
+(def ^:dynamic *reserved-symbols* [])
 (def ^:dynamic *symbol-map*
   (array-map
    #"^int$" "int*"
