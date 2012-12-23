@@ -261,10 +261,19 @@
          "isac$QUEST$ = function (i, c) { return i instanceof c; }")))
 
 (deftest case-tests
-  (is (= (js (case answer 42 (bingo)))
-         "switch (answer) { case 42: bingo(); }"))
+  (is (= (with-pretty-print (js (case answer 42 (bingo) 24 (tiny))))
+         (str "switch (answer) {\n"
+              "    case 42:\n"
+              "        bingo();\n"
+              "    case 24:\n"
+              "        tiny();\n"
+              "}")))
+  (is (= (js (case answer 42 (bingo) 24 (tiny)))
+         "switch (answer) { case 42: bingo(); case 24: tiny(); }"))
   (is (= (js (case answer (+* 10 20) (bingo)))
          "switch (answer) { case (10 + 20): bingo(); }"))
+  (is (= (js (case answer "text" (foo) (+* 10 20) (bingo)))
+         "switch (answer) { case \"text\": foo(); case (10 + 20): bingo(); }"))
   (is (= (js (case answer 1 :one 2 :two :anything-else))
          (str  "switch (answer) {"
                " case 1: 'one';"

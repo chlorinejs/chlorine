@@ -486,19 +486,21 @@
       (emit-block-if))))
 
 (defmethod emit "case" [[_ e & clauses]]
-  (let [pairs (partition 2 clauses)]
-    (print "switch (")
-    (binding [*return-expr* false]
-      (print (str e)))
-    (print ") {")
-    (doall
-     (for [[k v] pairs]
-       (do (print " case " )
+  (binding [*return-expr* false]
+    (let [pairs (partition 2 clauses)]
+      (print "switch (")
+      (emit e)
+      (print ") {")
+      (doall
+       (for [[k v] pairs]
+         (with-indent []
+           (newline-indent)
+           (print "case " )
            (emit k)
            (print ":")
            (with-block
              (with-indent []
-               (emit-statement v))))))
+               (emit-statement v)))))))
 
     (when (odd? (count clauses))
       (do (print " default:")
