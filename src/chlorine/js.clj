@@ -500,7 +500,9 @@
            (print ":")
            (with-block
              (with-indent []
-               (emit-statement v)))))))
+               (emit-statement v)
+               (newline-indent)
+               (print "break;")))))))
 
     (when (odd? (count clauses))
       (do (print " default:")
