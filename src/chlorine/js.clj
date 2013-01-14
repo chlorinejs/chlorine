@@ -286,6 +286,9 @@
                      (fn [& args#]
                        (apply ~(resolve sym) (concat [nil nil] args#)))}))))
 
+(defmethod emit "borrow-macros" [[_ & syms]]
+  (eval (cons 'borrow-macros syms)))
+
 (defn- emit-macro-expansion [form]
   (let [[mac-name & args] form
         mac (get-macro mac-name)
@@ -792,7 +795,9 @@ translate the Clojure subset `exprs' to a string of javascript code."
             f (if (vector? file)
                 (clojure.java.io/resource
                  (clojure.string/replace (second file) #"^/" ""))
-                (when (.isFile (clojure.java.io/file file))
+                (when (or (.isFile (clojure.java.io/file file))
+                          (.startsWith file "http://")
+                          (.startsWith file "https://"))
                   file))]
         (binding [*cwd* dir]
           (try

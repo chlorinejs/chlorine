@@ -265,20 +265,25 @@
          (str "switch (answer) {\n"
               "    case 42:\n"
               "        bingo();\n"
+              "        break;\n"
               "    case 24:\n"
               "        tiny();\n"
+              "        break;\n"
               "}")))
   (is (= (js (case answer 42 (bingo) 24 (tiny)))
-         "switch (answer) { case 42: bingo(); case 24: tiny(); }"))
+         (str "switch (answer) {"
+              " case 42: bingo(); break; case 24: tiny(); break; }")))
   (is (= (js (case answer (+* 10 20) (bingo)))
-         "switch (answer) { case (10 + 20): bingo(); }"))
+         "switch (answer) { case (10 + 20): bingo(); break; }"))
   (is (= (js (case answer "text" (foo) (+* 10 20) (bingo)))
-         "switch (answer) { case \"text\": foo(); case (10 + 20): bingo(); }"))
+         (str "switch (answer) {"
+              " case \"text\": foo(); break;"
+              " case (10 + 20): bingo(); break; }")))
   (is (= (js (case answer 1 :one 2 :two :anything-else))
-         (str  "switch (answer) {"
-               " case 1: 'one';"
-               " case 2: 'two';"
-               " default: 'anything-else'; }"))))
+         (str "switch (answer) {"
+              " case 1: 'one'; break;"
+              " case 2: 'two'; break;"
+              " default: 'anything-else'; }"))))
 
 (deftest try-catch-finally
   (is (= (js
