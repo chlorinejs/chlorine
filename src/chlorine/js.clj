@@ -792,13 +792,17 @@ translate the Clojure subset `exprs' to a string of javascript code."
   (with-out-str
     (doseq [script (apply flatten-files scripts)]
       (let [[file dir] (file-and-dir script)
-            f (if (vector? file)
-                (clojure.java.io/resource
-                 (clojure.string/replace (second file) #"^/" ""))
-                (when (or (.isFile (clojure.java.io/file file))
-                          (.startsWith file "http://")
-                          (.startsWith file "https://"))
-                  file))]
+            tojs (doall (spit "/tmp/tojs.log" (str file)))
+            f (cond
+               (vector? file)
+               (clojure.java.io/resource
+                (clojure.string/replace (second file) #"^/" ""))
+
+               (or (.isFile (clojure.java.io/file file))
+                   (.startsWith file "http://")
+                   (.startsWith file "https://"))
+               (do (doall (spit "/tmp/http.log" (str file)))
+                   file))]
         (binding [*cwd* dir]
           (try
             (if (nil? f) (throw (Exception. "File not found!")))
