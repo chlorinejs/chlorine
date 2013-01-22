@@ -1,18 +1,45 @@
 (ns chlorine.js
   (:require [clojure.string :as str])
-  (:use [clojure.java.io :only [reader]]
+  (:use [chlorine.reader]
         [pathetic.core :only [normalize]]
         [chlorine.util :only [flatten-files unzip assert-args
-                               *cwd* *cpd* file-and-dir
-                              re? reserved-symbol? replace-map]]))
+                              *cwd* *cpd* file-and-dir
+                              re? replace-map]]))
 
-(defn- sexp-reader [source]
-  "Wrap `source' in a reader suitable to pass to `read'."
-  (new java.io.PushbackReader (reader source)))
+(def ^:dynamic *print-pretty* false)
+
+(defmacro with-pretty-print [& body]
+  `(binding [*print-pretty* true]
+     ~@body))
+
+(def ^:dynamic *indent* 0)
+
+(defmacro with-indent [[& increment] & body]
+  `(binding [*indent* (+ *indent* (or ~increment 4))]
+     ~@body))
+
+(def ^:dynamic *in-block-exp?* false)
+
+(defmacro with-block [& body]
+  `(binding [*in-block-exp?* true]
+     ~@body))
+
+(defn newline-indent []
+  (if *print-pretty*
+    (do
+      (newline)
+      (print (apply str (repeat *indent* " "))))
+    (print " ")))
+
+(defmacro with-parens [[& [left right]] & body]
+  `(do
+     (print (or ~left "("))
+     ~@body
+     (print (or ~right ")"))))
 
 (def ^:dynamic *inline-if* false)
 (def ^:dynamic *quoted* false)
-(def ^:dynamic *print-pretty* false)
+
 (def ^:dynamic *reserved-symbols* [])
 (def ^:dynamic *symbol-map*
   (array-map
@@ -38,35 +65,6 @@
    "|"  "$PIPE$"
    ))
 
-(defmacro with-pretty-print [& body]
-  `(binding [*print-pretty* true]
-     ~@body))
-
-(def ^:dynamic *indent* 0)
-
-(defmacro with-indent [[& increment] & body]
-  `(binding [*indent* (+ *indent* (or ~increment 4))]
-     ~@body))
-
-(def ^:dynamic *in-block-exp* false)
-
-(defmacro with-block [& body]
-  `(binding [*in-block-exp* true]
-     ~@body))
-
-(defn- newline-indent []
-  (if *print-pretty*
-    (do
-      (newline)
-      (print (apply str (repeat *indent* " "))))
-    (print " ")))
-
-(defmacro with-parens [[& [left right]] & body]
-  `(do
-     (print (or ~left "("))
-     ~@body
-     (print (or ~right ")"))))
-
 (defn- jskey [x]
   (let [x (if (and (coll? x) (seq x)) (first x) x)]
     (if (symbol? x) (name x) x)))
@@ -78,15 +76,16 @@
 (declare tojs')
 (declare raw-js)
 
-(defn- sym->property [s]
+(defn sym->property
   "Transforms symbol or keyword into property access form."
+  [s]
   (binding [*quoted* true]
     (emit-str
       (if (dotsymbol? s)
         (symbol (subs (name s) 1))
         s))))
 
-(defmulti emit "Emit a javascript expression." {:private true} jskey)
+(defmulti emit "Emit a javascript expression." jskey)
 
 (defn- emit-delimited [delimiter args & [emitter]]
   (when-not (empty? args)
@@ -136,31 +135,9 @@
   (binding [*quoted* true]
     (emit-symbol expr)))
 
-(defn- unary-operator? [op]
-  (and (symbol? op) (contains? #{"++" "--" "!"} (name op))))
-
 (defn- emit-unary-operator [op arg]
   (print (name op))
   (emit arg))
-
-(defn- infix-operator? [op]
-  (and (symbol? op)
-       (contains? #{"and" "or"
-                    "bit-and" "bit-or" "bit-xor" "bit-not"
-                    "bit-shift-left" "bit-shift-right"
-                    "bit-shift-right-zero-fill"
-                    "rem"
-                    "+*" "-*" "**" "/"
-                    ">" ">=" "<" "<="
-                    ;;"="
-                    "=="
-                    "==="
-                    "not="
-                    ;;"!="
-                    "!=="
-                    "in"
-                    "instance?" "instanceof"}
-                  (name op))))
 
 (defn- emit-infix-operator [op & args]
   (let [clj->js {"instance?"       "instanceof"
@@ -279,15 +256,12 @@
           {(name mname) (eval `(clojure.core/fn ~args ~@body))}))
   nil)
 
-(defmacro borrow-macros [& syms]
-  (for [sym syms]
-    `(dosync (alter *macros* conj
-                    {~(name sym)
-                     (fn [& args#]
-                       (apply ~(resolve sym) (concat [nil nil] args#)))}))))
-
-(defmethod emit "borrow-macros" [[_ & syms]]
-  (eval (cons 'borrow-macros syms)))
+(defn borrow-macros [& syms]
+  (doseq [sym syms]
+    (dosync (alter *macros* conj
+                   {(name sym)
+                    (fn [& args#]
+                      (apply (resolve sym) (concat [nil nil] args#)))}))))
 
 (defn- emit-macro-expansion [form]
   (let [[mac-name & args] form
@@ -324,15 +298,6 @@
 (declare emit-var-bindings
          emit-destructured-seq-binding
          emit-destructured-map-binding)
-
-(defn- destructuring-form? [form]
-  (or (map? form) (vector? form)))
-
-(defn- binding-form? [form]
-  (or (symbol? form) (destructuring-form? form)))
-
-(defn- binding-special? [form]
-  (contains? #{'& :as} form))
 
 (defn- emit-binding [vname val]
   (binding [*inline-if* true]
@@ -628,7 +593,7 @@
   (let [emit-for-block (fn []
                          (print "for (var ")
                          (binding [*return-expr* false
-                                   *in-block-exp* false]
+                                   *in-block-exp?* false]
                            (emit-var-bindings bindings))
                          (print "; true;) {")
                          (with-indent []
@@ -751,9 +716,10 @@
 
 (defn js-emit [expr] (emit expr))
 
-(defmacro js [& exprs]
+(defmacro js
   "Translate the Clojure subset `exprs' to a string of javascript
 code."
+  [& exprs]
   (let [exprs# `(quote ~exprs)]
     `(binding [*temp-sym-count* (ref 999)]
        (with-out-str
@@ -761,17 +727,19 @@ code."
            (emit-statements ~exprs#)
            (js-emit (first ~exprs#)))))))
 
-(defmacro js-let [bindings & exprs]
+(defmacro js-let
   "Bind Clojure environment values to named vars of a cljs block, and
 translate the Clojure subset `exprs' to a string of javascript code."
+  [bindings & exprs]
   (let [form# 'fn
         [formals# actuals#] (unzip bindings)]
     `(with-out-str
        (emit-statement (list '(~form# ~(vec formals#) ~@exprs) ~@actuals#)))))
 
-(defmacro let-js [bindings quoted-expr]
+(defmacro let-js
   "Bind Clojure environment values to named vars of a quoted cljs block, and
 translate the Clojure subset `exprs' to a string of javascript code."
+  [bindings quoted-expr]
   (let [body# `(let ~bindings ~quoted-expr)]
     `(with-out-str
        (js-emit ~body#))))
@@ -792,7 +760,6 @@ translate the Clojure subset `exprs' to a string of javascript code."
   (with-out-str
     (doseq [script (apply flatten-files scripts)]
       (let [[file dir] (file-and-dir script)
-            tojs (doall (spit "/tmp/tojs.log" (str file)))
             f (cond
                (vector? file)
                (clojure.java.io/resource
@@ -801,8 +768,7 @@ translate the Clojure subset `exprs' to a string of javascript code."
                (or (.isFile (clojure.java.io/file file))
                    (.startsWith file "http://")
                    (.startsWith file "https://"))
-               (do (doall (spit "/tmp/http.log" (str file)))
-                   file))]
+               file)]
         (binding [*cwd* dir]
           (try
             (if (nil? f) (throw (Exception. "File not found!")))
@@ -821,9 +787,10 @@ translate the Clojure subset `exprs' to a string of javascript code."
                            " last s-expr " @*last-sexpr*)
                           e)))))))))
 
-(defn tojs [& scripts]
+(defn tojs
   "Load and translate the list of cljs scripts into javascript, and
 return as a string. Useful for translating an entire cljs script file."
+  [& scripts]
   (binding [*temp-sym-count* (ref 999)
-            *last-sexpr* (ref nil)]
+            *last-sexpr*     (ref nil)]
     (apply tojs' scripts)))
