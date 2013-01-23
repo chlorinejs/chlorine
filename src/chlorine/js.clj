@@ -473,10 +473,12 @@
                (print "break;")))))))
 
     (when (odd? (count clauses))
-      (do (print " default:")
-          (with-block
-            (with-indent []
-              (emit-statement (last clauses))))))
+      (with-indent []
+        (newline-indent)
+        (print "default:")
+        (with-block
+          (with-indent []
+            (emit-statement (last clauses))))))
     (newline-indent)
     (print "}")))
 
