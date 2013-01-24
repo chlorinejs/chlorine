@@ -13,4 +13,4 @@ Chlorine (formerly Clojurejs) is a naive implementation of a Clojure subset lang
 
 Chlorine is available under the Eclipse Public License - v 1.0.
 
-For more information see the chlorine [wiki](https://github.com/myguidingstar/chlorine/wiki).
+For more information see the chlorine [wiki](https://github.com/chlorinejs/chlorine/wiki).
