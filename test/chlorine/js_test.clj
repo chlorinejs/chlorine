@@ -28,42 +28,42 @@
   (is (= (js (append '(:foo bar baz) '(quux)))
          "append(['foo','bar','baz'], ['quux'])"))
 
-  (is (= (js (fn [a b] (+* a b)))
+  (is (= (js (fn* [a b] (+* a b)))
          "function (a, b) { return (a + b); }"))
 
-  (is (= (js (fn foo [a b] (+* a b)))
+  (is (= (js (fn* foo [a b] (+* a b)))
          "function foo (a, b) { return (a + b); }"))
 
-  (is (= (with-pretty-print (js (fn "Some func does stuff" [x] (+* x 1))))
+  (is (= (with-pretty-print (js (fn* "Some func does stuff" [x] (+* x 1))))
          (str "function (x) {\n"
               "    /* Some func does stuff */\n"
               "    return (x + 1);\n}")))
 
-  (is (= (with-pretty-print (js (fn "Some func\ndoes stuff" [x] (+* x 1))))
+  (is (= (with-pretty-print (js (fn* "Some func\ndoes stuff" [x] (+* x 1))))
          (str "function (x) {\n"
               "    /* Some func\n"
               "       does stuff */\n"
               "    return (x + 1);\n}")))
 
-  (is (= (js (defn foo [a b] (+* a b)))
-         "foo = function (a, b) { return (a + b); }"))
+  (is (= (js (fn* foo [a b] (+* a b)))
+         "function foo (a, b) { return (a + b); }"))
 
-  (is (= (js (defn foo [c] (.methodOf c)))
-         "foo = function (c) { return c.methodOf(); }"))
+  (is (= (js (fn* foo [c] (.methodOf c)))
+         "function foo (c) { return c.methodOf(); }"))
 
   (is (= (js
-          (defn test []
+          (fn* test []
             (let [a 1] (log (** a a)))
             (let [a 2] (log (** a a)))))
-         (str "test = function () { var a = 1;"
+         (str "function test () { var a = 1;"
               " log((a * a));;"
               " var a = 2;"
               " return log((a * a));; }")))
   (is (= (js
-          (defn test []
+          (fn* test []
             (let [a 1] (log (** a a)))
             (do (log "test") (+* 1 1))))
-         (str "test = function () {"
+         (str "function test () {"
               " var a = 1;"
               " log((a * a));;"
               "  log(\"test\");"
@@ -86,21 +86,21 @@
 
 (deftest destructuring
   (is (= (js
-          (defn test []
+          (fn* test []
             (let [a 1
                   b (+* a 1)
                   c (+* b 1)]
               (+* a b c))))
-         (str "test = function () {"
+         (str "function test () {"
               " var a = 1, b = (a + 1), c = (b + 1);"
               " return (a + b + c);; }")))
 
   ;; & rest
   (is (= (js
-          (defn test []
+          (fn* test []
             (let [[a b & r] [1 2 3 4]]
               [(+* a b) r])))
-         (str "test = function () {"
+         (str "function test () {"
               " var _temp_1000 = [1,2,3,4],"
               " a = _temp_1000[0],"
               " b = _temp_1000[1],"
@@ -108,9 +108,9 @@
               " return [(a + b),r];; }")))
 
   (is (= (js
-          (defn test [[a b & r]]
+          (fn* test [[a b & r]]
             [(+* a b) r]))
-         (str "test = function () {"
+         (str "function test () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " _temp_1001 = _temp_1000[0],"
               " a = _temp_1001[0],"
@@ -119,9 +119,9 @@
               " return [(a + b),r]; }")))
 
   (is (= (js
-          (defn test [a b & r]
+          (fn* test [a b & r]
             [(+* a b) r]))
-         (str "test = function () {"
+         (str "function test () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " a = _temp_1000[0],"
               " b = _temp_1000[1],"
@@ -130,7 +130,7 @@
 
   ;; :as
   (is (= (js
-          (fn [a [b] [c d & e :as f] :as g] nil))
+          (fn* [a [b] [c d & e :as f] :as g] nil))
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " a = _temp_1000[0],"
@@ -146,7 +146,7 @@
 
   ;; map destructuring
   (is (= (js
-          (fn [x {y :y, fred :fred}] fred))
+          (fn* [x {y :y, fred :fred}] fred))
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " x = _temp_1000[0],"
@@ -156,7 +156,7 @@
               " return fred; }")))
 
   (is (= (js
-          (fn [[{x :x, {z :z} :y}]] z))
+          (fn* [[{x :x, {z :z} :y}]] z))
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " _temp_1001 = _temp_1000[0],"
@@ -168,7 +168,7 @@
 
   ;; numbers as keys (this actually works)
   (is (= (js
-          (fn [{a 1, b 2, :or {a 3}}]))
+          (fn* [{a 1, b 2, :or {a 3}}]))
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " _temp_1001 = _temp_1000[0],"
@@ -178,7 +178,7 @@
 
   ;; :keys, :strs
   (is (= (js
-          (fn [x {y :y, z :z :keys [a b]}] z))
+          (fn* [x {y :y, z :z :keys [a b]}] z))
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " x = _temp_1000[0],"
@@ -190,7 +190,7 @@
               " return z; }")))
 
   (is (= (js
-          (fn [x {y :y, z :z :strs [a b]}] z))
+          (fn* [x {y :y, z :z :strs [a b]}] z))
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " x = _temp_1000[0], _temp_1001 = _temp_1000[1],"
@@ -201,7 +201,7 @@
               " return z; }")))
                                         ; defaults
   (is (= (js
-          (fn [x {y :y, z :z :or {y 1, z "foo"}}] z))
+          (fn* [x {y :y, z :z :or {y 1, z "foo"}}] z))
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " x = _temp_1000[0],"
@@ -211,7 +211,7 @@
               " return z; }")))
 
   (is (= (js
-          (fn [x {y :y, z :z :keys [a b] :or {a 1, y :bleh}}] z))
+          (fn* [x {y :y, z :z :keys [a b] :or {a 1, y :bleh}}] z))
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " x = _temp_1000[0],"
@@ -224,18 +224,18 @@
   ;; unsupported for now
   (is (thrown-with-msg? Exception #"& must be followed by"
         (js
-         (fn [x y & {z :z}] z)))))
+         (fn* [x y & {z :z}] z)))))
 
 (deftest loops
   (is (= (js
-          (defn join [arr delim]
+          (fn* join [arr delim]
             (loop [str (get arr 0)
                    i 1]
               (if (< i (get arr .length))
                 (recur (+* str delim (get arr i))
                        (+* i 1))
                 str))))
-         (str "join = function (arr, delim) {"
+         (str "function join (arr, delim) {"
               " for (var str = arr[0], i = 1; true;) {"
               " if ((i < arr.length)) {"
               " var _temp_1000 = [(str + delim + arr[i]),(i + 1)];\n"
@@ -248,17 +248,17 @@
 
 (deftest inline-if
   (is (= (js
-          (defn test [a]
+          (fn* test [a]
             ((if (> a 0) minus plus) a 1)))
-         "test = function (a) { return (((a > 0) ? minus : plus))(a,1); }"))
+         "function test (a) { return (((a > 0) ? minus : plus))(a,1); }"))
 
   ;; implicit `null` alternate
-  (is (= (js (defn test [a] (console.log (if (> a 0) a))))
-         "test = function (a) { return console.log(((a > 0) ? a : null)); }")))
+  (is (= (js (fn* test [a] (console.log (if (> a 0) a))))
+         "function test (a) { return console.log(((a > 0) ? a : null)); }")))
 
 (deftest inline-primitives
-  (is (= (js (defn isac? [i c] (inline "i instanceof c")))
-         "isac$QUEST$ = function (i, c) { return i instanceof c; }")))
+  (is (= (js (fn* isac? [i c] (inline "i instanceof c")))
+         "function isac$QUEST$ (i, c) { return i instanceof c; }")))
 
 (deftest case-tests
   (is (= (with-pretty-print (js (case answer 42 (bingo) 24 (tiny))))
@@ -287,23 +287,23 @@
 
 (deftest try-catch-finally
   (is (= (js
-          (defn test []
+          (fn* test []
             (try
               (/ 5 0)
               (catch ex
                   (console.log ex))
               (finally
                0))))
-         (str "test = function () {"
+         (str "function test () {"
               " try { return (5 / 0); } catch (ex) {"
               " return console.log(ex); }"
               " finally {"
               " return 0; }; }")))
 
   (is (= (js
-          (defn test [a]
+          (fn* test [a]
             (if (< a 0) (throw (new Error "Negative numbers not accepted")))))
-         (str "test = function (a) {"
+         (str "function test (a) {"
               " if ((a < 0)) {"
               " throw new Error(\"Negative numbers not accepted\"); }; }"))))
 

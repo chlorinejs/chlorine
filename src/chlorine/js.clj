@@ -725,7 +725,7 @@ code."
   "Bind Clojure environment values to named vars of a cljs block, and
 translate the Clojure subset `exprs' to a string of javascript code."
   [bindings & exprs]
-  (let [form# 'fn
+  (let [form# 'fn*
         [formals# actuals#] (unzip bindings)]
     `(with-out-str
        (emit-statement (list '(~form# ~(vec formals#) ~@exprs) ~@actuals#)))))
