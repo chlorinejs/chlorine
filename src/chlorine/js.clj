@@ -235,7 +235,7 @@
 
 (defn- get-macro [n] (and (symbol? n) (get @*macros* (name n))))
 
-(defn- undef-macro [n]
+(defn undef-macro [n]
   (when (macro? n)
     (when *print-pretty* (println "// undefining macro" n))
     (dosync (alter *macros* dissoc (name n)))))
@@ -409,17 +409,9 @@
     (newline-indent)
     (print "}")))
 
-(defmethod emit "fn" [[_ & fdecl]]
+(defmethod emit "fn*" [[_ & fdecl]]
   (with-return-expr []
     (with-block (emit-function-name fdecl))))
-
-(defmethod emit "defn" [[_ name & fdecl]]
-  (assert-args defn (symbol? name) "a symbol as its name")
-  (undef-macro name)
-  (emit-symbol name)
-  (print " = ")
-  (with-block
-    (emit-function-name fdecl)))
 
 (defmethod emit "if" [[_ test consequent & [alternate]]]
   (let [emit-inline-if (fn []
@@ -557,7 +549,7 @@
 
 (defmethod emit "set!" [[_ & apairs]]
   (binding [*return-expr* false
-            *in-fn-toplevel* false
+            ;*in-fn-toplevel* false
             *inline-if* true]
     (let [apairs (partition 2 apairs)]
       (emit-delimited " = " (first apairs))
