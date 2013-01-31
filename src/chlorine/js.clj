@@ -249,11 +249,14 @@
 (defmethod emit "include-raw!" [[_ & files]]
   (print (str (apply raw-js files))))
 
-(defmethod emit "defmacro" [[_ mname args & body]]
-  (dosync
-   (alter *macros*
-          conj
-          {(name mname) (eval `(clojure.core/fn ~args ~@body))}))
+(defmethod emit "defmacro" [[_ mname & mdeclrs]]
+  (let [mdeclrs (if (string? (first mdeclrs))
+                  (rest mdeclrs)
+                  mdeclrs)]
+    (dosync
+     (alter *macros*
+            conj
+            {(name mname) (eval `(clojure.core/fn ~@mdeclrs))})))
   nil)
 
 (defn borrow-macros [& syms]
