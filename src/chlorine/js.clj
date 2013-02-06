@@ -40,7 +40,7 @@
 (def ^:dynamic *inline-if* false)
 (def ^:dynamic *quoted* false)
 
-(def ^:dynamic *reserved-symbols* [])
+(def ^:dynamic *reserved-symbols* [#"^\$.*" #"^\.\$.*"])
 (def ^:dynamic *symbol-map*
   (array-map
    #"^int$" "int*"
