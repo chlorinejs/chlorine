@@ -454,18 +454,17 @@
       (print "switch (")
       (emit e)
       (print ") {")
-      (doall
-       (for [[k v] pairs]
-         (with-indent []
-           (newline-indent)
-           (print "case " )
-           (emit k)
-           (print ":")
-           (with-block
-             (with-indent []
-               (emit-statement v)
-               (newline-indent)
-               (print "break;")))))))
+      (doseq [[k v] pairs]
+        (with-indent []
+          (newline-indent)
+          (print "case " )
+          (emit k)
+          (print ":")
+          (with-block
+            (with-indent []
+              (emit-statement v)
+              (newline-indent)
+              (print "break;"))))))
 
     (when (odd? (count clauses))
       (with-indent []
