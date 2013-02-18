@@ -186,7 +186,7 @@
      ~@body))
 
 (def ^:dynamic *in-fn-toplevel* true)
-
+(def ^:dynamic *unique-return-expr* false)
 (defn- emit-function-form [form]
   (binding [*inline-if* true
             *in-fn-toplevel* false]
@@ -408,8 +408,10 @@
     (with-indent []
       (when docstring
         (emit-docstring docstring))
-      (binding [*return-expr* true]
-        (emit-statements-with-return body)))
+      (binding [*return-expr* true
+                *unique-return-expr* (when (= 1 (count body)) true)]
+        (emit-statements-with-return body)
+        ))
     (newline-indent)
     (print "}")))
 
@@ -494,18 +496,28 @@
                          (binding [*return-expr* false]
                            (with-block (emit-var-bindings bindings))
                            (print ";"))
-                         (emit-statements-with-return exprs))]
-    (if (or (not *in-fn-toplevel*) *inline-if*)
-      (with-return-expr []
-        (print "(function () {")
-        (with-indent []
-          (newline-indent)
-          (binding [*return-expr* true]
-            (emit-var-decls)))
-        (newline-indent)
-        (print " }).call(this)"))
-      (binding [*in-fn-toplevel* false]
-        (emit-var-decls)))))
+                         (emit-statements-with-return exprs))
+        emit-let-fun (fn []
+                       (print "(function () {")
+                       (with-indent []
+                         (newline-indent)
+                         (binding [*return-expr* true]
+                           (emit-var-decls)))
+                       (newline-indent)
+                       (print " })()"))]
+    (cond
+     (or *unique-return-expr* *in-fn-toplevel*)
+     (binding [*unique-return-expr* false
+               *in-fn-toplevel* false]
+       (emit-var-decls))
+
+     (or *inline-if*
+         *return-expr*)
+     (with-return-expr []
+       (emit-let-fun))
+
+     :default
+     (emit-let-fun))))
 
 (defmethod emit "new" [[_ class & args]]
   (with-return-expr []
@@ -554,7 +566,7 @@
 
 (defmethod emit "set!" [[_ & apairs]]
   (binding [*return-expr* false
-            ;*in-fn-toplevel* false
+            *in-fn-toplevel* false
             *inline-if* true]
     (let [apairs (partition 2 apairs)]
       (emit-delimited " = " (first apairs))
@@ -602,7 +614,8 @@
                            (print "break;"))
                          (newline-indent)
                          (print "}"))]
-    (if (or (not *in-fn-toplevel*) *inline-if*)
+    (if (and (not (or *unique-return-expr* *in-fn-toplevel*))
+             (or *inline-if* *return-expr*))
       (with-return-expr []
         (print "(function () {")
         (binding [*return-expr* true]
@@ -611,7 +624,9 @@
             (emit-for-block))
           (newline-indent))
         (print "}).call(this)"))
-      (binding [*in-fn-toplevel* false]
+
+      (binding [*unique-return-expr* false
+                *in-fn-toplevel* false]
         (emit-for-block)))))
 
 (defmethod emit "recur" [[_ & args]]
