@@ -65,6 +65,10 @@
    "|"  "$PIPE$"
    ))
 
+(def ^:dynamic *return-expr* false)
+(def ^:dynamic *in-fn-toplevel* true)
+(def ^:dynamic *unique-return-expr* false)
+
 (defn- jskey [x]
   (let [x (if (and (coll? x) (seq x)) (first x) x)]
     (if (symbol? x) (name x) x)))
@@ -157,8 +161,10 @@
                  "bit-shift-right" ">>"
                  "bit-shift-right-zero-fill" ">>>"}
         js-op (get clj->js (name op) (name op))]
-    (with-parens []
-      (emit-delimited (str " " js-op " ") args))))
+    (binding [*unique-return-expr* false
+              *in-fn-toplevel* false]
+      (with-parens []
+        (emit-delimited (str " " js-op " ") args)))))
 
 (defn- emit-function-call [fun & args]
   (emit fun)
@@ -175,8 +181,6 @@
   (with-parens []
     (with-indent [] (emit-delimited ", " args))))
 
-(def ^:dynamic *return-expr* false)
-
 (defmacro with-return-expr [[& [new-val]] & body]
   `(binding [*return-expr* (if *return-expr*
                              (do
@@ -185,10 +189,9 @@
                              (or ~new-val false))]
      ~@body))
 
-(def ^:dynamic *in-fn-toplevel* true)
-(def ^:dynamic *unique-return-expr* false)
 (defn- emit-function-form [form]
   (binding [*inline-if* true
+            *unique-return-expr* false
             *in-fn-toplevel* false]
     (let [[fun & args] form
           invoke-method (fn [[sel recvr & args]]
@@ -409,7 +412,8 @@
       (when docstring
         (emit-docstring docstring))
       (binding [*return-expr* true
-                *unique-return-expr* (when (= 1 (count body)) true)]
+                *unique-return-expr* (when (= 1 (count body)) true)
+                *in-fn-toplevel* false]
         (emit-statements-with-return body)
         ))
     (newline-indent)
@@ -452,32 +456,34 @@
       (emit-block-if))))
 
 (defmethod emit "case" [[_ e & clauses]]
-  (let [pairs (partition 2 clauses)]
-    (print "switch (")
-    (binding [*return-expr* false]
-      (emit e))
-    (print ") {")
-    (doseq [[k v] pairs]
+  (binding [*unique-return-expr* false
+            *in-fn-toplevel* false]
+    (let [pairs (partition 2 clauses)]
+      (print "switch (")
+      (binding [*return-expr* false]
+        (emit e))
+      (print ") {")
+      (doseq [[k v] pairs]
+        (with-indent []
+          (newline-indent)
+          (print "case " )
+          (binding [*return-expr* false]
+            (emit k))
+          (print ":")
+          (with-block
+            (with-indent []
+              (emit-statement v)
+              (newline-indent)
+              (when-not *return-expr*
+                (print "break;")))))))
+
+    (when (odd? (count clauses))
       (with-indent []
         (newline-indent)
-        (print "case " )
-        (binding [*return-expr* false]
-          (emit k))
-        (print ":")
+        (print "default:")
         (with-block
           (with-indent []
-            (emit-statement v)
-            (newline-indent)
-            (when-not *return-expr*
-              (print "break;")))))))
-
-  (when (odd? (count clauses))
-    (with-indent []
-      (newline-indent)
-      (print "default:")
-      (with-block
-        (with-indent []
-          (emit-statement (last clauses))))))
+            (emit-statement (last clauses)))))))
   (newline-indent)
   (print "}"))
 
@@ -567,6 +573,7 @@
 (defmethod emit "set!" [[_ & apairs]]
   (binding [*return-expr* false
             *in-fn-toplevel* false
+            *unique-return-expr* false
             *inline-if* true]
     (let [apairs (partition 2 apairs)]
       (emit-delimited " = " (first apairs))
@@ -614,8 +621,10 @@
                            (print "break;"))
                          (newline-indent)
                          (print "}"))]
-    (if (and (not (or *unique-return-expr* *in-fn-toplevel*))
-             (or *inline-if* *return-expr*))
+    (if (or *in-fn-toplevel* *unique-return-expr*)
+      (binding [*unique-return-expr* false
+                *in-fn-toplevel* false]
+        (emit-for-block))
       (with-return-expr []
         (print "(function () {")
         (binding [*return-expr* true]
@@ -624,10 +633,7 @@
             (emit-for-block))
           (newline-indent))
         (print "}).call(this)"))
-
-      (binding [*unique-return-expr* false
-                *in-fn-toplevel* false]
-        (emit-for-block)))))
+      )))
 
 (defmethod emit "recur" [[_ & args]]
   (binding [*return-expr* false]

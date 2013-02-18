@@ -55,19 +55,28 @@
           (fn* test []
             (let [a 1] (log (** a a)))
             (let [a 2] (log (** a a)))))
-         (str "function test () { var a = 1;"
-              " log((a * a));;"
-              " var a = 2;"
-              " return log((a * a));; }")))
+         (str  "function test () {"
+               " (function () {"
+               " var a = 1;"
+               " return log((a * a));"
+               "  })();"
+               " return (function () {"
+               " var a = 2;"
+               " return log((a * a));"
+               "  })(); }"
+               )))
   (is (= (js
           (fn* test []
             (let [a 1] (log (** a a)))
             (do (log "test") (+* 1 1))))
          (str "function test () {"
+              " (function () {"
               " var a = 1;"
-              " log((a * a));;"
+              " return log((a * a));"
+              "  })();"
               "  log(\"test\");"
-              " return (1 + 1);; }"))))
+              " return (1 + 1);; }"
+              ))))
 
 (deftest property-access
   (is (= (js (get map :key))
