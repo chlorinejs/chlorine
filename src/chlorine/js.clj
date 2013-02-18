@@ -69,8 +69,8 @@
   (let [x (if (and (coll? x) (seq x)) (first x) x)]
     (if (symbol? x) (name x) x)))
 
-(defn- dotsymbol? [s]
-  (and (symbol? s) (.startsWith (name s) ".")))
+(defn method? [s]
+  (and (symbol? s) (= \. (first (name s)))))
 
 (declare emit-str)
 (declare tojs')
@@ -81,7 +81,7 @@
   [s]
   (binding [*quoted* true]
     (emit-str
-      (if (dotsymbol? s)
+      (if (method? s)
         (symbol (subs (name s) 1))
         s))))
 
@@ -165,6 +165,10 @@
   (with-parens []
     (with-indent [] (emit-delimited ", " args))))
 
+(defn emit-invoke-function [fun & args]
+  (with-parens [] (emit fun))
+  (with-parens [] (emit-delimited "," args)))
+
 (defn- emit-method-call [recvr selector & args]
   (emit recvr)
   (emit selector)
@@ -187,20 +191,17 @@
   (binding [*inline-if* true
             *in-fn-toplevel* false]
     (let [[fun & args] form
-          method? (fn [f] (and (symbol? f) (= \. (first (name f)))))
           invoke-method (fn [[sel recvr & args]]
                           (apply emit-method-call recvr sel args))
           new-object? (fn [f] (and (symbol? f) (= \. (last (name f)))))
-          invoke-fun (fn [fun & args]
-                       (with-parens [] (emit fun))
-                       (with-parens [] (emit-delimited "," args)))]
+          ]
       (cond
        (unary-operator? fun) (apply emit-unary-operator form)
        (infix-operator? fun) (apply emit-infix-operator form)
        (keyword? fun) (let [[map & default] args] (emit `(get ~map ~fun ~@default)))
        (method? fun) (invoke-method form)
        (new-object? fun) (emit `(new ~(symbol (apply str (drop-last (str fun)))) ~@args))
-       (coll? fun) (apply invoke-fun form)
+       (coll? fun) (apply emit-invoke-function form)
        true (apply emit-function-call form)))))
 
 (defn emit-statement [expr]
@@ -527,7 +528,7 @@
         emit-get
           (fn []
             (emit map)
-            (if (dotsymbol? key)
+            (if (method? key)
               (emit key)
               (do
                 (print "[")
