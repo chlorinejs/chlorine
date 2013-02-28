@@ -224,7 +224,8 @@
   (binding [*return-expr* false]
     (doseq [expr (butlast exprs)]
       (emit-statement expr)))
-  (emit-statement (last exprs)))
+  (when (not= 'nil (last exprs))
+    (emit-statement (last exprs))))
 
 (defmethod emit "def" [[_ name value]]
   (print "var ")
@@ -725,7 +726,7 @@
        (char? expr) (print (format "'%c'" expr))
        (and *quoted* (coll? expr)) (emit-vector expr)
        (coll? expr) (emit-function-form expr)
-       (nil? expr) (print "null")
+       (nil? expr) (print "undefined")
        true (print expr)
        ))))
 

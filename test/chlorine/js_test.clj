@@ -150,8 +150,8 @@
               " d = _temp_1002[1],"
               " e = _temp_1002.slice(2),"
               " f = _temp_1002,"
-              " g = _temp_1000;"
-              " return null; }")))
+              " g = _temp_1000; }")
+         ))
 
   ;; map destructuring
   (is (= (js
@@ -182,8 +182,7 @@
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " _temp_1001 = _temp_1000[0],"
               " a = (1 in _temp_1001 ? _temp_1001[1] : 3),"
-              " b = _temp_1001[2];"
-              " return null; }")))
+              " b = _temp_1001[2]; }")))
 
   ;; :keys, :strs
   (is (= (js
@@ -263,7 +262,10 @@
 
   ;; implicit `null` alternate
   (is (= (js (fn* test [a] (console.log (if (> a 0) a))))
-         "function test (a) { return console.log(((a > 0) ? a : null)); }")))
+         (str "function test (a) {"
+              " return console.log("
+              "((a > 0) ? a : undefined)); }")
+         )))
 
 (deftest inline-primitives
   (is (= (js (fn* isac? [i c] (inline "i instanceof c")))
