@@ -267,6 +267,14 @@
               "((a > 0) ? a : undefined)); }")
          )))
 
+(deftest if-tests
+  (is (= (js
+          (if a b c))
+         "if (a) { b; } else { c; }"))
+  (is (= (js
+          (if :else (something) ignore-me))
+         " something();")))
+
 (deftest inline-primitives
   (is (= (js (fn* isac? [i c] (inline "i instanceof c")))
          "function isac$QUEST$ (i, c) { return i instanceof c; }")))

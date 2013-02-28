@@ -445,7 +445,9 @@
                         (newline-indent)
                         (print "}")
                         ;; alternate might be `0`, which js equates as `nil`
-                        (when-not (nil? alternate)
+                        (when-not (or (nil? alternate)
+                                      (= '(clojure.core/cond)
+                                         alternate))
                           (print " else {")
                           (with-block
                             (with-indent []
@@ -454,7 +456,12 @@
                           (print "}")))]
     (if (and *inline-if* consequent)
       (emit-inline-if)
-      (emit-block-if))))
+      (if (or (keyword? test)
+              (true? test))
+        ;; emit consequent directly without printing checks
+        ;; used to optimize `cond` macro output
+        (emit-statement consequent)
+        (emit-block-if)))))
 
 (defmethod emit "case" [[_ e & clauses]]
   (binding [*unique-return-expr* false
