@@ -35,6 +35,10 @@
   (is (= (with-out-str (emit-map {:a 1 "b" {'c 2}}))
          "{\"b\" : {c : 2},'a' : 1}")))
 
+(deftest emit-set-test
+  (is (= (with-out-str (emit-set #{:foo "bar" 'bazz 5}))
+         "{5 : true,'foo' : true,\"bar\" : true,bazz : true}")))
+
 (deftest literals
   (is (= (js *print-pretty*) "$STAR$print_pretty$STAR$"))
   (is (= (js number?) "number$QUEST$"))
