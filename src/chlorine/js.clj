@@ -152,7 +152,9 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
                         (emit key)
                         (print " : true"))))))
 
-(defn- emit-vector [expr]
+(defn emit-vector
+  "Clojure vectors and quoted lists are emitted as javascript arrays."
+  [expr]
   (with-parens ["[" "]"]
     (binding [*inline-if* true]
       (emit-delimited "," (seq expr)))))
