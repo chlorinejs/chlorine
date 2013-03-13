@@ -5,6 +5,14 @@
 
 (dosync (ref-set *macros* {}))
 
+(deftest detect-form-test
+  (is (= (detect-form '(foo 1 :x))
+         "foo"))
+  (is (= (detect-form 123)
+         123))
+  (is (= (detect-form "foo")
+         "foo")))
+
 (deftest literals
   (is (= (js *print-pretty*) "$STAR$print_pretty$STAR$"))
   (is (= (js number?) "number$QUEST$"))
