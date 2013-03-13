@@ -13,6 +13,14 @@
   (is (= (detect-form "foo")
          "foo")))
 
+(deftest sym->property-test
+  (is (= (sym->property :a)
+         "'a'"))
+  (is (= (sym->property 'b)
+         "'b'"))
+  (is (= (sym->property '.c)
+         "'c'")))
+
 (deftest literals
   (is (= (js *print-pretty*) "$STAR$print_pretty$STAR$"))
   (is (= (js number?) "number$QUEST$"))
