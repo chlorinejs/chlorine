@@ -119,7 +119,14 @@ function arguments etc."
       (print delimiter)
       ((or emitter emit) arg))))
 
-(defn emit-map [expr]
+;; several functions to emit Clojure data of
+;;  map, set, vector, regexp, symbol and keyword types
+
+(defn emit-map
+  "Clojure maps are emitted to javascript key/value objects.
+Keys can only be strings. Keywords and quoted symbols don't really make
+ sense in Chlorinejs and that's why they are emitted to plain strings."
+  [expr]
   (with-parens ["{" "}"]
     (binding [*inline-if* true]
       (emit-delimited ","
