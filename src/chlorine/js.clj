@@ -69,19 +69,35 @@
 (def ^:dynamic *in-fn-toplevel* true)
 (def ^:dynamic *unique-return-expr* false)
 
-(defn- jskey [x]
-  (let [x (if (and (coll? x) (seq x)) (first x) x)]
-    (if (symbol? x) (name x) x)))
+;; Chlorinejs transforms Clojure code/data to Javascript equivalents.
+;;
+;; Normal data such as strings, numbers, keywords, symbols, vectors, (quoted)
+;; lists are transformed by associated emitters of their type.
+;;
+;; Functions, macros and special forms (including javascript native ones)
+;; share the same looks: they are unquoted lists whose first element is the
+;; form name and require one more step: looking up by the names to detect
+;; their types.
 
-(defn method? [s]
-  (and (symbol? s) (= \. (first (name s)))))
+(defn detect-form
+  "Detects macro/function/special form names from expressions
+for further processing. Used as dispatch function for chlorine.js/emit, the
+most hardworking multi-method in chlorine library."
+  [expr]
+  (let [expr (if (and (coll? expr) (seq expr)) (first expr) expr)]
+    (if (symbol? expr) (name expr) expr)))
+
+(defn method?
+  "Checks if a form is a method call (a symbol starting with '.')"
+  [form-name]
+  (and (symbol? form-name) (= \. (first (name form-name)))))
 
 (declare emit-str)
 (declare tojs')
 (declare raw-js)
 
 (defn sym->property
-  "Transforms symbol or keyword into property access form."
+  "Transforms symbol or keyword into object's property access form."
   [s]
   (binding [*quoted* true]
     (emit-str
@@ -89,16 +105,21 @@
         (symbol (subs (name s) 1))
         s))))
 
-(defmulti emit "Emit a javascript expression." jskey)
+(defmulti emit
+  "Receives forms, emits javascript expressions."
+  detect-form)
 
-(defn- emit-delimited [delimiter args & [emitter]]
+(defn emit-delimited
+  "Emit sequences with delimiters. Useful to emit javascript arrays,
+function arguments etc."
+  [delimiter args & [emitter]]
   (when-not (empty? args)
     ((or emitter emit) (first args))
     (doseq [arg (rest args)]
       (print delimiter)
       ((or emitter emit) arg))))
 
-(defn- emit-map [expr]
+(defn emit-map [expr]
   (with-parens ["{" "}"]
     (binding [*inline-if* true]
       (emit-delimited ","
