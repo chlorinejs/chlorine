@@ -136,7 +136,14 @@ Keys can only be strings. Keywords and quoted symbols don't really make
                         (print " : ")
                         (emit val))))))
 
-(defn- emit-set [expr]
+(defn emit-set
+  "Clojure sets are emitted to javascript key/value objects whose
+values are all `true`. These 'sets' objects as javascript nature will have
+distinct elements (the keys) which can be checked by `contains?` (javascript's
+`in`). Please remember, all set elements are treated strings by javascript.
+That means, both `(contains? 5 {:a 1 \"5\" 2})` and
+ `(contains? \"5\" {:b 3 5 4} will return true."
+  [expr]
   (with-parens ["{" "}"]
     (binding [*inline-if* true]
       (emit-delimited ","
