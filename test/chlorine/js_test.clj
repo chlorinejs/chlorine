@@ -29,6 +29,12 @@
                            (fn [number] (print (inc number)))))
          "2;3;4")))
 
+(deftest emit-map-test
+  (is (= (with-out-str (emit-map {:a 1 :b 2}))
+         "{'a' : 1,'b' : 2}"))
+  (is (= (with-out-str (emit-map {:a 1 "b" {'c 2}}))
+         "{\"b\" : {c : 2},'a' : 1}")))
+
 (deftest literals
   (is (= (js *print-pretty*) "$STAR$print_pretty$STAR$"))
   (is (= (js number?) "number$QUEST$"))
