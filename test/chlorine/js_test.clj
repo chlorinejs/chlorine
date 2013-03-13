@@ -21,6 +21,14 @@
   (is (= (sym->property '.c)
          "'c'")))
 
+(deftest emit-delimted-test
+  (is (= (with-out-str (emit-delimited "," [1 2 3]))
+         "1,2,3"))
+  (is (= (with-out-str
+           (emit-delimited ";" [1 2 3]
+                           (fn [number] (print (inc number)))))
+         "2;3;4")))
+
 (deftest literals
   (is (= (js *print-pretty*) "$STAR$print_pretty$STAR$"))
   (is (= (js number?) "number$QUEST$"))
