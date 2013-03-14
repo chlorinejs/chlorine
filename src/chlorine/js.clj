@@ -327,7 +327,10 @@ and normal function calls."
   (doseq [expr exprs]
     (emit-statement expr)))
 
-(defn emit-statements-with-return [exprs]
+(defn emit-statements-with-return
+  "Emits statements with the manual `return` added in front of the
+ last expression. If the last expression in `nil`, ignores it."
+  [exprs]
   (binding [*return-expr* false]
     (doseq [expr (butlast exprs)]
       (emit-statement expr)))
