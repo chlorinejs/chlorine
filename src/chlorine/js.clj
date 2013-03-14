@@ -690,33 +690,12 @@ them instead of rewriting."
   (print "return ")
   (emit value))
 
-(defmethod emit "get" [args]
-  (let [[_ map key default]  args
-        default? (> (count args) 3)
-        emit-get
-          (fn []
-            (emit map)
-            (if (method? key)
-              (emit key)
-              (do
-                (print "[")
-                (emit key)
-                (print "]"))))]
-    (with-return-expr []
-      (if default?
-        ;; FIXME Should be able to re-use code for
-        ;; inline if and contains? macro here.
-        ;; FIXME Also, `map` will be evaluated twice (once in
-        ;; the `in` test, and once in output of `emit-get`
-        (with-parens []
-          (print (sym->property key))
-          (print " in ")
-          (emit map)
-          (print " ? ")
-          (emit-get)
-          (print " : ")
-          (emit default))
-        (emit-get)))))
+(defmethod emit "get*" [[_ map key]]
+  (with-return-expr []
+    (emit map)
+    (print "[")
+    (emit key)
+    (print "]")))
 
 (defmethod emit "set!" [[_ & apairs]]
   (binding [*return-expr* false
