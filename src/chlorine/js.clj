@@ -952,9 +952,12 @@ varies depending on states such as macros, temporary symbol count etc."
                           e)))))))))
 
 (defn tojs
-  "Load and translate the list of cljs scripts into javascript, and
-return as a string. Useful for translating an entire cljs script file."
+  "The top-level, stateless way to compile Chlorine source files.
+Loads and compiles a list of cl2 scripts into javascript, and
+returns them in a string. This function starts its own temporary symbol count
+ and macro memory."
   [& scripts]
   (binding [*temp-sym-count* (ref 999)
-            *last-sexpr*     (ref nil)]
+            *last-sexpr*     (ref nil)
+            *macros*         (ref {})]
     (apply tojs' scripts)))
