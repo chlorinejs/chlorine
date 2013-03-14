@@ -243,7 +243,10 @@ in parentheses."
   (with-parens []
     (with-indent [] (emit-delimited ", " args))))
 
-(defn emit-invoke-function [fun & args]
+(defn emit-invoke-function
+  "Like emit-function-call, but wraps the function in parentheses. Used to
+emit function calls where function is not a symbol but an other form instead."
+  [fun & args]
   (with-parens [] (emit fun))
   (with-parens [] (emit-delimited "," args)))
 
