@@ -315,7 +315,8 @@ and normal function calls."
 
 (defn emit-statement [expr]
   (binding [*inline-if* false]
-    (if (and (coll? expr) (= 'defmacro (first expr))) ; cracks are showing
+    ;; defining a macro prints out nothing
+    (if (and (coll? expr) (= 'defmacro (first expr)))
       (emit expr)
       (do
         (newline-indent)
