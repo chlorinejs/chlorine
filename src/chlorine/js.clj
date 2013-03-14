@@ -414,6 +414,10 @@ them instead of rewriting."
    (ref-set *temp-sym-count* (+ 1 @*temp-sym-count*))
    (symbol (str "_temp_" @*temp-sym-count*))))
 
+;; Chlorine supports the following Clojure binding forms:
+;;  - Basic binding with just a single symbol
+;;  - Destructuring binding with sequences or maps
+
 (defn- emit-simple-binding [vname val]
   (emit (if (ignorable-arg? vname) (tempsym) vname))
   (print " = ")
