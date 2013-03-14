@@ -348,7 +348,9 @@ and normal function calls."
 ;; generates code).
 (def ^:dynamic *macros* (ref {}))
 
-(defn- macro? [n] (and (symbol? n) (contains? @*macros* (name n))))
+(defn macro?
+  "Checks if a macro with that name is defined."
+  [n] (and (symbol? n) (contains? @*macros* (name n))))
 
 (defn- get-macro [n] (and (symbol? n) (get @*macros* (name n))))
 
