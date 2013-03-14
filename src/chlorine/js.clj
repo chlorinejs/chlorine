@@ -493,17 +493,13 @@ them instead of rewriting."
       (fn [[vname val]]
         (emit-binding vname val)))))
 
-(declare emit-function)
-
-(defn- emit-function-name [fdecl]
-  (if (symbol? (first fdecl))
-    (emit-function (first fdecl) (rest fdecl))
-    (emit-function nil fdecl)))
-
-(defn- emit-function [fname fdecl]
-  (let [docstring (if (string? (first fdecl))
-                    (first fdecl)
-                    nil)
+(defn- emit-function [fdecl]
+  (let [[fname fdecl] (if (symbol? (first fdecl))
+                        [(first fdecl) (rest fdecl)]
+                        [nil fdecl])
+        docstring     (if (string? (first fdecl))
+                        (first fdecl)
+                        nil)
         fdecl     (if (string? (first fdecl))
                     (rest fdecl)
                     fdecl)
@@ -513,7 +509,7 @@ them instead of rewriting."
                       (some ignorable-arg? args))
         body      (rest fdecl)]
     (assert-args fn
-      (vector? args) "a vector for its bindings")
+                 (vector? args) "a vector for its bindings")
     (if dargs?
       (do
         (print "function ")
@@ -551,7 +547,7 @@ them instead of rewriting."
 
 (defmethod emit "fn*" [[_ & fdecl]]
   (with-return-expr []
-    (with-block (emit-function-name fdecl))))
+    (with-block (emit-function fdecl))))
 
 (defmethod emit "if" [[_ test consequent & [alternate]]]
   (let [emit-inline-if (fn []
