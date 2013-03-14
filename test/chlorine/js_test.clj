@@ -113,19 +113,10 @@
               ))))
 
 (deftest property-access
-  (is (= (js (get map :key))
+  (is (= (js (get* map :key))
          "map['key']"))
   (is (= (js (:key map))
-         "map['key']"))
-  (is (= (js (get map .key))
-         "map.key")))
-
-(deftest property-access-default
-  (is (= (js (get map :key default))
-         "('key' in map ? map['key'] : default)"))
-
-  (is (= (js (get map .key default))
-         "('key' in map ? map.key : default)")))
+         "map['key']")))
 
 (deftest destructuring
   (is (= (js
