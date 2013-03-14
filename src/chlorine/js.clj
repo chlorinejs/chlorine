@@ -917,7 +917,10 @@ translate the Clojure subset `exprs' to a string of javascript code."
                 file)]
         (print (slurp f))))))
 
-(defn tojs' [& scripts]
+(defn tojs'
+  "The low-level, stateful way to compile Chlorine source files. This function
+varies depending on states such as macros, temporary symbol count etc."
+  [& scripts]
   (with-out-str
     (doseq [script (apply flatten-files scripts)]
       (let [[file dir] (file-and-dir script)
