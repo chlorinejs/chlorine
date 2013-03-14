@@ -370,7 +370,10 @@ and normal function calls."
             {(name mname) (eval `(clojure.core/fn ~@mdeclrs))})))
   nil)
 
-(defn borrow-macros [& syms]
+(defn borrow-macros
+  "Many Clojure macros work the same in Chlorine. Use this function to reuse
+them instead of rewriting."
+  [& syms]
   (doseq [sym syms]
     (dosync (alter *macros* conj
                    {(name sym)
