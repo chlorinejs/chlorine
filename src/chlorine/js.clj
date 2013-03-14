@@ -235,7 +235,10 @@ javascript if the symbol isn't marked as reserved ones."
       (with-parens []
         (emit-delimited (str " " js-op " ") args)))))
 
-(defn- emit-function-call [fun & args]
+(defn emit-function-call
+  "Emits a function call by simply emitting the function name and its arguments
+in parentheses."
+  [fun & args]
   (emit fun)
   (with-parens []
     (with-indent [] (emit-delimited ", " args))))
