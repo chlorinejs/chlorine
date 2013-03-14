@@ -40,31 +40,6 @@
 (def ^:dynamic *inline-if* false)
 (def ^:dynamic *quoted* false)
 
-(def ^:dynamic *reserved-symbols* [#"^\$.*" #"^\.\$.*"])
-(def ^:dynamic *symbol-map*
-  (array-map
-   #"^int$" "int*"
-   "$"  "$USD$"
-   "->" "$ARROW$"
-   "=>" "$BARROW$"
-   "<-" "$LARROW$"
-   ">"  "$GT$"
-   "<"  "$LT$"
-   ">=" "$GE$"
-   "=<" "$LE$"
-   "-"  "_"
-   "'"   "$QUOT$"
-   "!"  "$EXCL$"
-   "?"  "$QUEST$"
-   "#"  "$HASH$"
-   "%"  "$P100$"
-   "&"  "$AND$"
-   "*"  "$STAR$"
-   "+"  "$PLUS$"
-   "="  "$EQ$"
-   "|"  "$PIPE$"
-   ))
-
 (def ^:dynamic *return-expr* false)
 (def ^:dynamic *in-fn-toplevel* true)
 (def ^:dynamic *unique-return-expr* false)
@@ -161,6 +136,42 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 
 (defn- emit-re [expr]
   (print (str expr)))
+
+;; Symbols are Chlorine's amazing pieces. We have a wide range of valid
+;; characters for Chlorine just like Clojure. You can use Lisp-style naming
+;; conventions such as "?" endings for predicate functions.
+;; Because javascript doesn't allow such characters, the function
+;; `chlorine.util/replace-map` will be used to replace all Clojure-only
+;; characters to javascript-friendly ones.
+
+;; The mapping used to do the replacements
+(def ^:dynamic *symbol-map*
+  (array-map
+   #"^int$" "int*"
+   "$"  "$USD$"
+   "->" "$ARROW$"
+   "=>" "$BARROW$"
+   "<-" "$LARROW$"
+   ">"  "$GT$"
+   "<"  "$LT$"
+   ">=" "$GE$"
+   "=<" "$LE$"
+   "-"  "_"
+   "'"   "$QUOT$"
+   "!"  "$EXCL$"
+   "?"  "$QUEST$"
+   "#"  "$HASH$"
+   "%"  "$P100$"
+   "&"  "$AND$"
+   "*"  "$STAR$"
+   "+"  "$PLUS$"
+   "="  "$EQ$"
+   "|"  "$PIPE$"
+   ))
+
+;; You can also specify "reserved symbols", which are NOT affected by
+;; `replace-map`.
+(def ^:dynamic *reserved-symbols* [#"^\$.*" #"^\.\$.*"])
 
 (defn emit-symbol
   ([expr]
