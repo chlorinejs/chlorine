@@ -130,10 +130,10 @@
 (deftest destructuring
   (is (= (js
           (fn* test []
-            (let [a 1
-                  b (+* a 1)
-                  c (+* b 1)]
-              (+* a b c))))
+               (let [a 1
+                     b (+* a 1)
+                     c (+* b 1)]
+                 (+* a b c))))
          (str "function test () {"
               " var a = 1, b = (a + 1), c = (b + 1);"
               " return (a + b + c);; }")))
@@ -141,8 +141,8 @@
   ;; & rest
   (is (= (js
           (fn* test []
-            (let [[a b & r] [1 2 3 4]]
-              [(+* a b) r])))
+               (let [[a b & r] [1 2 3 4]]
+                 [(+* a b) r])))
          (str "function test () {"
               " var _temp_1000 = [1,2,3,4],"
               " a = _temp_1000[0],"
@@ -152,7 +152,7 @@
 
   (is (= (js
           (fn* test [[a b & r]]
-            [(+* a b) r]))
+               [(+* a b) r]))
          (str "function test () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " _temp_1001 = _temp_1000[0],"
@@ -163,7 +163,7 @@
 
   (is (= (js
           (fn* test [a b & r]
-            [(+* a b) r]))
+               [(+* a b) r]))
          (str "function test () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " a = _temp_1000[0],"
