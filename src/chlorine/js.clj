@@ -556,6 +556,7 @@ them instead of rewriting."
   (binding [*inline-if* true]
     (emit value)))
 
+;; Low-level function form. Please use `fn` and `defn` macros instead
 (defmethod emit "fn*" [[_ & fdecl]]
   (with-return-expr []
     (with-block (emit-function fdecl))))
