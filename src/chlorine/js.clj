@@ -561,44 +561,47 @@ them instead of rewriting."
   (with-return-expr []
     (with-block (emit-function fdecl))))
 
+(defn emit-inline-if
+  [test consequent alternate]
+  (with-return-expr []
+    (with-parens []
+      (emit test)
+      (print " ? ")
+      (emit consequent)
+      (print " : ")
+      (emit alternate))))
+
+(defn emit-block-if [test consequent alternate]
+  (print "if (")
+  (binding [*return-expr* false
+            *inline-if* true]
+    (emit test))
+  (print ") {")
+  (with-block
+    (with-indent []
+      (emit-statement consequent)))
+  (newline-indent)
+  (print "}")
+  ;; alternate might be `0`, which js equates as `nil`
+  (when-not (or (nil? alternate)
+                (= '(clojure.core/cond)
+                   alternate))
+    (print " else {")
+    (with-block
+      (with-indent []
+        (emit-statement alternate)))
+    (newline-indent)
+    (print "}")))
+
 (defmethod emit "if" [[_ test consequent & [alternate]]]
-  (let [emit-inline-if (fn []
-                         (with-return-expr []
-                           (with-parens []
-                             (emit test)
-                             (print " ? ")
-                             (emit consequent)
-                             (print " : ")
-                             (emit alternate))))
-        emit-block-if (fn []
-                        (print "if (")
-                        (binding [*return-expr* false
-                                  *inline-if* true]
-                          (emit test))
-                        (print ") {")
-                        (with-block
-                          (with-indent []
-                            (emit-statement consequent)))
-                        (newline-indent)
-                        (print "}")
-                        ;; alternate might be `0`, which js equates as `nil`
-                        (when-not (or (nil? alternate)
-                                      (= '(clojure.core/cond)
-                                         alternate))
-                          (print " else {")
-                          (with-block
-                            (with-indent []
-                              (emit-statement alternate)))
-                          (newline-indent)
-                          (print "}")))]
-    (if (and *inline-if* consequent)
-      (emit-inline-if)
-      (if (or (keyword? test)
-              (true? test))
-        ;; emit consequent directly without printing checks
-        ;; used to optimize `cond` macro output
-        (emit-statement consequent)
-        (emit-block-if)))))
+  (if (and *inline-if* consequent)
+    (emit-inline-if test consequent alternate)
+    (if (or (keyword? test)
+            (true? test))
+      ;; emit consequent directly without printing checks
+      ;; used to optimize `cond` macro output
+      (emit-statement consequent)
+      (emit-block-if test consequent alternate))))
 
 (defmethod emit "case" [[_ e & clauses]]
   (binding [*unique-return-expr* false
