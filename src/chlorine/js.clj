@@ -207,16 +207,17 @@ javascript if the symbol isn't marked as reserved ones."
 ;; Please use high-level functions from Chlorine's core library instead of
 ;; low-level ones"
 
-(defn- emit-unary-operator [op arg]
+(defn emit-unary-operator
+  [op arg]
   (print (name op))
   (emit arg))
 
-(defn- emit-infix-operator [op & args]
+(defn emit-infix-operator
+  [op & args]
   (let [clj->js {"instance?"       "instanceof"
                  "and"             "&&"
                  "or"              "||"
                  "=*"              "==="
-                 "not="            "!=="
                  "+*"              "+"
                  "-*"              "-"
                  "**"              "*"
