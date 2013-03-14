@@ -448,17 +448,26 @@ them instead of rewriting."
           (condp = vname
             '&  (cond
                   seen-rest?
-                    (throw (Exception. "Unsupported binding form, only :as can follow &"))
+                    (throw
+                     (Exception.
+                      "Unsupported binding form, only :as can follow &"))
                   (not (symbol? vval))
-                    (throw (Exception. "Unsupported binding form, & must be followed by exactly one symbol"))
+                    (throw
+                     (Exception.
+                      (str "Unsupported binding form, & must be"
+                           " followed by exactly one symbol")))
                   :else
                     (do (emit-binding vval `(.slice ~temp ~i))
                         (recur (nnext vseq) (inc i) true)))
             :as (cond
                   (not= (count (nnext vseq)) 0)
-                    (throw (Exception. "Unsupported binding form, nothing must follow after :as <binding>"))
+                    (throw
+                     (Exception. (str "Unsupported binding form, nothing"
+                                      " must follow after :as <binding>")))
                   (not (symbol? vval))
-                    (throw (Exception. "Unsupported binding form, :as must be followed by a symbol"))
+                    (throw
+                     (Exception. (str "Unsupported binding form, :as must"
+                                      " be followed by a symbol")))
                   :else
                     (emit-binding vval temp))
             (do (emit-binding vname `(get ~temp ~i))
