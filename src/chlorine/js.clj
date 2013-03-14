@@ -186,7 +186,9 @@ javascript if the symbol isn't marked as reserved ones."
          sym
          (replace-map sym *symbol-map*))))))
 
-(defn- emit-keyword [expr]
+(defn emit-keyword
+  "Emits Clojure keywords. Uses emit-symbol as backend."
+  [expr]
   (binding [*quoted* true]
     (emit-symbol expr)))
 
