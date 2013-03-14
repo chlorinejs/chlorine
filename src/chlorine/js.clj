@@ -594,13 +594,13 @@ them instead of rewriting."
     (print "}")))
 
 (defmethod emit "if" [[_ test consequent & [alternate]]]
-  (if (and *inline-if* consequent)
-    (emit-inline-if test consequent alternate)
-    (if (or (keyword? test)
-            (true? test))
-      ;; emit consequent directly without printing checks
-      ;; used to optimize `cond` macro output
-      (emit-statement consequent)
+  ;; emit consequent directly without printing checks
+  ;; used to optimize `cond` macro output
+  (if (or (keyword? test)
+          (true? test))
+    (emit-statement consequent)
+    (if (and *inline-if* consequent)
+      (emit-inline-if test consequent alternate)
       (emit-block-if test consequent alternate))))
 
 (defmethod emit "case" [[_ e & clauses]]
