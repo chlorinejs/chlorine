@@ -68,7 +68,6 @@ most hardworking multi-method in chlorine library."
 
 (declare emit-str)
 (declare tojs')
-(declare raw-js)
 
 (defn sym->property
   "Transforms symbol or keyword into object's property access form."
@@ -360,15 +359,6 @@ and normal function calls."
   (when (macro? n)
     (when *print-pretty* (println "// undefining macro" n))
     (dosync (alter *macros* dissoc (name n)))))
-
-(defmethod emit "import!" [[_ & files]]
-  (apply tojs' files))
-
-(defmethod emit "include!" [[_ & files]]
-  (print (str (apply tojs' files))))
-
-(defmethod emit "include-raw!" [[_ & files]]
-  (print (str (apply raw-js files))))
 
 (defmethod emit "defmacro" [[_ mname & mdeclrs]]
   (let [mdeclrs (if (string? (first mdeclrs))
@@ -898,7 +888,26 @@ translate the Clojure subset `exprs' to a string of javascript code."
 
 (def ^:dynamic *last-sexpr* nil)
 
-(defn raw-js [& scripts]
+(declare raw-script)
+
+;; Chlorine doesn't support an official way to modularize code like Clojure
+;; with namespaces. Instead, Chlorine provides a basic syntax to load code
+;; from other files into the current file as if they are one. This can be
+;; done with `include!`
+
+(defmethod emit "include!" [[_ & files]]
+  (print (str (apply tojs' files))))
+
+;; Sometimes you only want to load macros from an outside file and print out
+;; nothing. You `import!` then
+(defmethod emit "import!" [[_ & files]]
+  (apply tojs' files))
+
+;; Inlines raw javascript from files instead of Chlorine ones.
+(defmethod emit "include-raw!" [[_ & files]]
+  (print (str (apply raw-script files))))
+
+(defn raw-script [& scripts]
   (with-out-str
     (doseq [script (apply flatten-files scripts)]
       (let [[file dir] (file-and-dir script)
