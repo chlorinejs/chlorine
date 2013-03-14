@@ -266,7 +266,9 @@ emit function calls where function is not a symbol but an other form instead."
 ;; (print "return" and set the var back to `false`)
 (def ^:dynamic *return-expr* false)
 
-(defmacro with-return-expr [[& [new-val]] & body]
+(defmacro with-return-expr
+  "Consumes *return-expr* `true` states or sets it to a new value."
+  [[& [new-val]] & body]
   `(binding [*return-expr* (if *return-expr*
                              (do
                                (print "return ")
