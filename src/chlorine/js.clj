@@ -388,7 +388,9 @@ them instead of rewriting."
         macex (apply mac args)]
     (emit macex)))
 
-(defn- emit-docstring [docstring]
+(defn emit-docstring
+  "Prints docstrings as javascript comments."
+  [docstring]
   (when *print-pretty*
     (let [lines (str/split-lines docstring)]
       (newline-indent)
