@@ -174,14 +174,17 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 (def ^:dynamic *reserved-symbols* [#"^\$.*" #"^\.\$.*"])
 
 (defn emit-symbol
-  ([expr]
-     (let [sym (name expr)]
-       (print
-        (if *quoted*
-          (str "'" (name expr) "'")
-          (if (reserved-symbol? *reserved-symbols* sym)
-            sym
-            (replace-map sym *symbol-map*)))))))
+  "Emits Clojure symbols to javascript ones. If the symbol is quoted, emits its
+name as a string. Does some replacements with characters not supported by
+javascript if the symbol isn't marked as reserved ones."
+  [expr]
+  (let [sym (name expr)]
+    (print
+     (if *quoted*
+       (str "'" (name expr) "'")
+       (if (reserved-symbol? *reserved-symbols* sym)
+         sym
+         (replace-map sym *symbol-map*))))))
 
 (defn- emit-keyword [expr]
   (binding [*quoted* true]
