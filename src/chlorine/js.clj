@@ -352,7 +352,9 @@ and normal function calls."
   "Checks if a macro with that name is defined."
   [n] (and (symbol? n) (contains? @*macros* (name n))))
 
-(defn- get-macro [n] (and (symbol? n) (get @*macros* (name n))))
+(defn get-macro
+  "Gets the macro function by its name in order to generate code."
+  [n] (and (symbol? n) (get @*macros* (name n))))
 
 (defn undef-macro [n]
   (when (macro? n)
