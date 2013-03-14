@@ -407,7 +407,9 @@ them instead of rewriting."
 ;; all these symbols are unique, we use this counter
 (def  ^:dynamic *temp-sym-count* nil)
 
-(defn tempsym []
+(defn tempsym
+  "Generates an unique temporary symbol."
+  []
   (dosync
    (ref-set *temp-sym-count* (+ 1 @*temp-sym-count*))
    (symbol (str "_temp_" @*temp-sym-count*))))
