@@ -276,23 +276,42 @@ emit function calls where function is not a symbol but an other form instead."
                              (or ~new-val false))]
      ~@body))
 
-(defn- emit-function-form [form]
+(defn emit-function-form
+  "Emits function forms such as: unary and infix operator calls,
+applying keyword on a map, method calls, creating new object calls,
+and normal function calls."
+  [form]
   (binding [*inline-if* true
             *unique-return-expr* false
             *in-fn-toplevel* false]
-    (let [[fun & args] form
+    (let [[fun & args]  form
           invoke-method (fn [[sel recvr & args]]
                           (apply emit-method-call recvr sel args))
-          new-object? (fn [f] (and (symbol? f) (= \. (last (name f)))))
-          ]
+          new-object?   (fn [f] (and (symbol? f) (= \. (last (name f)))))]
       (cond
+       ;; those are not normal function calls
        (unary-operator? fun) (apply emit-unary-operator form)
+
        (infix-operator? fun) (apply emit-infix-operator form)
-       (keyword? fun) (let [[map & default] args] (emit `(get ~map ~fun ~@default)))
-       (method? fun) (invoke-method form)
-       (new-object? fun) (emit `(new ~(symbol (apply str (drop-last (str fun)))) ~@args))
-       (coll? fun) (apply emit-invoke-function form)
-       true (apply emit-function-call form)))))
+
+       (keyword? fun)
+       (let [[map & default] args]
+         (emit `(get ~map ~fun ~@default)))
+
+       (method? fun)         (invoke-method form)
+
+       (new-object? fun)
+       (emit
+        `(new ~(symbol (apply str (drop-last (str fun))))
+              ~@args))
+
+       ;; Normal function calls:
+       ;;  - Ensures caller are in parentheses by using `emit-invoke-function`
+       ;;  instead of `emit-function-call` in case the caller is not simply
+       ;;  a symbol.
+       (coll? fun)           (apply emit-invoke-function form)
+
+       true                  (apply emit-function-call form)))))
 
 (defn emit-statement [expr]
   (binding [*inline-if* false]
