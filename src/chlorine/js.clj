@@ -40,7 +40,6 @@
 (def ^:dynamic *inline-if* false)
 (def ^:dynamic *quoted* false)
 
-(def ^:dynamic *return-expr* false)
 (def ^:dynamic *in-fn-toplevel* true)
 (def ^:dynamic *unique-return-expr* false)
 
@@ -257,6 +256,15 @@ emit function calls where function is not a symbol but an other form instead."
   (emit selector)
   (with-parens []
     (with-indent [] (emit-delimited ", " args))))
+
+;; All Clojure forms return something (even nil). Javascript is imperative
+;; and its forms may or may not return values. Javascript function bodies
+;; require a manual `return` keyword.
+;;
+;; That's why we create this dynamic var with initial value `false`,
+;; change its value to `true` where necessary and "consume" `true` values
+;; (print "return" and set the var back to `false`)
+(def ^:dynamic *return-expr* false)
 
 (defmacro with-return-expr [[& [new-val]] & body]
   `(binding [*return-expr* (if *return-expr*
