@@ -263,6 +263,15 @@
               " y = ('y' in _temp_1001 ? _temp_1001['y'] : 'bleh'),"
               " z = _temp_1001['z']; return z; }")))
 
+  (is (= (js
+          (fn* [{x :x y :y :as all}]
+               [x y all]))
+         (str "function () {"
+              " var _temp_1000 = Array.prototype.slice.call(arguments),"
+              " all = _temp_1000[0],"
+              " x = all['x'],"
+              " y = all['y'];"
+              " return [x,y,all]; }")))
   ;; unsupported for now
   (is (thrown-with-msg? Exception #"& must be followed by"
         (js
