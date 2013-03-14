@@ -403,6 +403,8 @@ them instead of rewriting."
 (defn- ignorable-arg? [n]
   (and (symbol? n) (.startsWith (name n) "_")))
 
+;; ChlorineJS produces a lot of temporary javascript symbols. To ensure
+;; all these symbols are unique, we use this counter
 (def  ^:dynamic *temp-sym-count* nil)
 
 (defn tempsym []
