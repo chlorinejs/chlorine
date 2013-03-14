@@ -465,12 +465,12 @@ them instead of rewriting."
                 (recur (next vseq) (inc i) seen-rest?))))))))
 
 (defn- emit-destructured-map-binding [vmap val]
-  (let [temp     (tempsym)
+  (let [temp     (or (:as vmap) (tempsym))
         defaults (get vmap :or)
         keysmap  (reduce #(assoc %1 %2 (keyword %2))
                   {}
                   (mapcat vmap [:keys :strs :syms]))
-        vmap     (merge (dissoc vmap :or :keys :strs :syms) keysmap)]
+        vmap     (merge (dissoc vmap :as :or :keys :strs :syms) keysmap)]
     (print (str temp " = "))
     (emit val)
     (doseq [[vname vkey] vmap]
