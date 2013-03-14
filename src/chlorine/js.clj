@@ -337,6 +337,15 @@ and normal function calls."
   (when (not= 'nil (last exprs))
     (emit-statement (last exprs))))
 
+;; Lisper love macros. In fact, making a macro means writing a function
+;; that returns some code. Chlorine macros are nearly Clojure ones:
+;; you can write the function (by `defmacro`) using all Clojure expressions,
+;; even ones from external Clojure libraries (if you've already loaded them).
+;; The only difference is that the generated code is treated as Chlorine one.
+
+;; When defined, new macros are added to a ref holding a map. The map keys
+;; are macro names while the values are the macro functions (the one that
+;; generates code).
 (def ^:dynamic *macros* (ref {}))
 
 (defn- macro? [n] (and (symbol? n) (contains? @*macros* (name n))))
