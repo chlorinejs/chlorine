@@ -337,13 +337,6 @@ and normal function calls."
   (when (not= 'nil (last exprs))
     (emit-statement (last exprs))))
 
-(defmethod emit "def" [[_ name value]]
-  (print "var ")
-  (emit-symbol name)
-  (print " = ")
-  (binding [*inline-if* true]
-    (emit value)))
-
 (def ^:dynamic *macros* (ref {}))
 
 (defn- macro? [n] (and (symbol? n) (contains? @*macros* (name n))))
@@ -529,6 +522,14 @@ and normal function calls."
         ))
     (newline-indent)
     (print "}")))
+
+;; We define local vars with `def`
+(defmethod emit "def" [[_ name value]]
+  (print "var ")
+  (emit-symbol name)
+  (print " = ")
+  (binding [*inline-if* true]
+    (emit value)))
 
 (defmethod emit "fn*" [[_ & fdecl]]
   (with-return-expr []
