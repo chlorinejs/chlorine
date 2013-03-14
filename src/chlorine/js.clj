@@ -487,7 +487,9 @@ them instead of rewriting."
       (cond
         (not (and (binding-form? vname)
                   (or (some #(% vkey) #{keyword? number? binding-form?}))))
-          (throw (Exception. "Unsupported binding form, binding symbols must be followed by keywords or numbers"))
+          (throw
+           (Exception. (str "Unsupported binding form, binding symbols "
+                            "must be followed by keywords or numbers")))
 
         :else
           (if-let [[_ default] (find defaults vname)]
