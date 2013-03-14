@@ -192,6 +192,21 @@ javascript if the symbol isn't marked as reserved ones."
   (binding [*quoted* true]
     (emit-symbol expr)))
 
+;; Some Chlorine forms are converted directly to javascript native
+;; operators: unary and infix ones.
+
+;; Unary operators in Chlorine: "!"
+;; Infix operators are consist of
+;;   - `instance?` special form
+;;   - and/or macros
+;;   - some low-level math operators such as plus (+*), minus (-*), multiple (**)
+;; and remainder (rem)
+;;   - low-level comparator === which can't work on vectors and maps
+;;   - binary operators
+;;
+;; Please use high-level functions from Chlorine's core library instead of
+;; low-level ones"
+
 (defn- emit-unary-operator [op arg]
   (print (name op))
   (emit arg))
