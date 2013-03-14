@@ -380,7 +380,9 @@ them instead of rewriting."
                     (fn [& args#]
                       (apply (resolve sym) (concat [nil nil] args#)))}))))
 
-(defn- emit-macro-expansion [form]
+(defn emit-macro-expansion
+  "Gets and executes macro function, emits the result as Chlorine code."
+  [form]
   (let [[mac-name & args] form
         mac (get-macro mac-name)
         macex (apply mac args)]
