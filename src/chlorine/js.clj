@@ -250,7 +250,9 @@ emit function calls where function is not a symbol but an other form instead."
   (with-parens [] (emit fun))
   (with-parens [] (emit-delimited "," args)))
 
-(defn- emit-method-call [recvr selector & args]
+(defn emit-method-call
+  "Like emit-function-call, but for method calls."
+  [recvr selector & args]
   (emit recvr)
   (emit selector)
   (with-parens []
