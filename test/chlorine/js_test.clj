@@ -117,6 +117,12 @@
   (is (= (js (:key map))
          "get(map, 'key')")))
 
+(deftest set!-test
+  (is (= (js (set! foo 1))
+         "foo = 1"))
+  (is (= (js (set! (get foo :bar) 2))
+         "foo['bar'] = 2")))
+
 (deftest destructuring
   (is (= (js
           (fn* test []
