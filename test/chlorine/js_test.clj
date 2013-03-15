@@ -55,10 +55,9 @@
   (is (= (js (+* 1 2 3)) "(1 + 2 + 3)"))
   (is (= (js (+* "foo" "bar" "baz")) "(\"foo\" + \"bar\" + \"baz\")"))
   (is (= (js (:test {:test 1 :foo 2 :bar 3}))
-         "{'test' : 1,'foo' : 2,'bar' : 3}['test']"))
+         "get({'test' : 1,'foo' : 2,'bar' : 3}, 'test')"))
   (is (= (js (let [m {:test 1 :foo 2 :bar 3}] (:baz m 4)))
-         (str "var m = {'test' : 1,'foo' : 2,'bar' : 3};"
-              " ('baz' in m ? m['baz'] : 4);")))
+         "var m = {'test' : 1,'foo' : 2,'bar' : 3}; get(m, 'baz', 4);"))
   (is (= (js (append '(:foo bar baz) '(quux)))
          "append(['foo','bar','baz'], ['quux'])"))
 
@@ -116,7 +115,7 @@
   (is (= (js (get* map :key))
          "map['key']"))
   (is (= (js (:key map))
-         "map['key']")))
+         "get(map, 'key')")))
 
 (deftest destructuring
   (is (= (js
@@ -185,8 +184,8 @@
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " x = _temp_1000[0],"
               " _temp_1001 = _temp_1000[1],"
-              " y = _temp_1001['y'],"
-              " fred = _temp_1001['fred'];"
+              " y = get(_temp_1001, 'y'),"
+              " fred = get(_temp_1001, 'fred');"
               " return fred; }")))
 
   (is (= (js
@@ -195,9 +194,9 @@
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " _temp_1001 = _temp_1000[0],"
               " _temp_1002 = _temp_1001[0],"
-              " x = _temp_1002['x'],"
-              " _temp_1003 = _temp_1002['y'],"
-              " z = _temp_1003['z'];"
+              " x = get(_temp_1002, 'x'),"
+              " _temp_1003 = get(_temp_1002, 'y'),"
+              " z = get(_temp_1003, 'z');"
               " return z; }")))
 
   ;; numbers as keys (this actually works)
@@ -206,8 +205,9 @@
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " _temp_1001 = _temp_1000[0],"
-              " a = (1 in _temp_1001 ? _temp_1001[1] : 3),"
-              " b = _temp_1001[2]; }")))
+              " a = get(_temp_1001, 1, 3),"
+              " b = get(_temp_1001, 2); }")
+         ))
 
   ;; :keys, :strs
   (is (= (js
@@ -216,31 +216,32 @@
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " x = _temp_1000[0],"
               " _temp_1001 = _temp_1000[1],"
-              " a = _temp_1001['a'],"
-              " b = _temp_1001['b'],"
-              " y = _temp_1001['y'],"
-              " z = _temp_1001['z'];"
+              " a = get(_temp_1001, 'a'),"
+              " b = get(_temp_1001, 'b'),"
+              " y = get(_temp_1001, 'y'),"
+              " z = get(_temp_1001, 'z');"
               " return z; }")))
 
   (is (= (js
           (fn* [x {y :y, z :z :strs [a b]}] z))
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
-              " x = _temp_1000[0], _temp_1001 = _temp_1000[1],"
-              " a = _temp_1001['a'],"
-              " b = _temp_1001['b'],"
-              " y = _temp_1001['y'],"
-              " z = _temp_1001['z'];"
+              " x = _temp_1000[0],"
+              " _temp_1001 = _temp_1000[1],"
+              " a = get(_temp_1001, 'a'),"
+              " b = get(_temp_1001, 'b'),"
+              " y = get(_temp_1001, 'y'),"
+              " z = get(_temp_1001, 'z');"
               " return z; }")))
-                                        ; defaults
+
   (is (= (js
           (fn* [x {y :y, z :z :or {y 1, z "foo"}}] z))
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " x = _temp_1000[0],"
               " _temp_1001 = _temp_1000[1],"
-              " y = ('y' in _temp_1001 ? _temp_1001['y'] : 1),"
-              " z = ('z' in _temp_1001 ? _temp_1001['z'] : \"foo\");"
+              " y = get(_temp_1001, 'y', 1),"
+              " z = get(_temp_1001, 'z', \"foo\");"
               " return z; }")))
 
   (is (= (js
@@ -249,10 +250,11 @@
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " x = _temp_1000[0],"
               " _temp_1001 = _temp_1000[1],"
-              " a = ('a' in _temp_1001 ? _temp_1001['a'] : 1),"
-              " b = _temp_1001['b'],"
-              " y = ('y' in _temp_1001 ? _temp_1001['y'] : 'bleh'),"
-              " z = _temp_1001['z']; return z; }")))
+              " a = get(_temp_1001, 'a', 1),"
+              " b = get(_temp_1001, 'b'),"
+              " y = get(_temp_1001, 'y', 'bleh'),"
+              " z = get(_temp_1001, 'z');"
+              " return z; }")))
 
   (is (= (js
           (fn* [{x :x y :y :as all}]
@@ -260,8 +262,8 @@
          (str "function () {"
               " var _temp_1000 = Array.prototype.slice.call(arguments),"
               " all = _temp_1000[0],"
-              " x = all['x'],"
-              " y = all['y'];"
+              " x = get(all, 'x'),"
+              " y = get(all, 'y');"
               " return [x,y,all]; }")))
   ;; unsupported for now
   (is (thrown-with-msg? Exception #"& must be followed by"
@@ -271,18 +273,18 @@
 (deftest loops
   (is (= (js
           (fn* join [arr delim]
-            (loop [str (get arr 0)
+            (loop [str (get* arr 0)
                    i 1]
-              (if (< i (get arr .length))
-                (recur (+* str delim (get arr i))
+              (if (< i (count arr))
+                (recur (+* str delim (get* arr i))
                        (+* i 1))
                 str))))
          (str "function join (arr, delim) {"
               " for (var str = arr[0], i = 1; true;) {"
-              " if ((i < arr.length)) {"
+              " if ((i < count(arr))) {"
               " var _temp_1000 = [(str + delim + arr[i]),(i + 1)];\n"
-              " str = _temp_1000[0];"
-              " i = _temp_1000[1];"
+              " str = get(_temp_1000, 0);"
+              " i = get(_temp_1000, 1);"
               " continue; }"
               " else {"
               " return str; };"
