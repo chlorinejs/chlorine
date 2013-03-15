@@ -117,6 +117,12 @@
   (is (= (js (:key map))
          "get(map, 'key')")))
 
+(deftest transform-get-test
+  (is (= (transform-get '(get x :a))
+         '(get* x :a)))
+  (is (= (transform-get 'foo)
+         'foo)))
+
 (deftest set!-test
   (is (= (js (set! foo 1))
          "foo = 1"))

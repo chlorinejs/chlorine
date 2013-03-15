@@ -677,6 +677,13 @@ them instead of rewriting."
      :default
      (emit-let-fun))))
 
+(defn transform-get
+  "Transforms `get` to `get*` to access object properties"
+  [k]
+  (if (and (seq? k) (= 'get (first k)))
+    (cons 'get* (rest k))
+    k))
+
 (defmethod emit "new" [[_ class & args]]
   (with-return-expr []
     (binding [*inline-if* true]
@@ -709,12 +716,13 @@ them instead of rewriting."
             *in-fn-toplevel* false
             *unique-return-expr* false
             *inline-if* true]
-    (let [apairs (partition 2 apairs)]
-      (emit-delimited " = " (first apairs))
-      (doseq [apair (rest apairs)]
+    (let [apairs (partition 2 apairs)
+          [k v] (first apairs)]
+      (emit-delimited " = " [(transform-get k) v])
+      (doseq [[k v] (rest apairs)]
         (print ";")
         (newline-indent)
-        (emit-delimited " = " apair)))))
+        (emit-delimited " = " [(transform-get k) v])))))
 
 (defmethod emit "try" [[_ expr & clauses]]
   (print "try {")
