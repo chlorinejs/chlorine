@@ -111,6 +111,12 @@
               " return (1 + 1);; }"
               ))))
 
+(deftest method?-property?-tests
+  (is (= (method? '.foo)
+         true))
+  (is (= (property? '.-bar)
+         true)))
+
 (deftest property-access
   (is (= (js (get* map :key))
          "map['key']"))

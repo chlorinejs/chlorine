@@ -61,6 +61,11 @@ most hardworking multi-method in chlorine library."
   (let [expr (if (and (coll? expr) (seq expr)) (first expr) expr)]
     (if (symbol? expr) (name expr) expr)))
 
+(defn property?
+  "Checks if a form is a property access (a symbol starting with '.-')"
+  [form-name]
+  (and (symbol? form-name) (.startsWith (name form-name) ".-")))
+
 (defn method?
   "Checks if a form is a method call (a symbol starting with '.')"
   [form-name]
