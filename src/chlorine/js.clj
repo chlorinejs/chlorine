@@ -694,6 +694,9 @@ them instead of rewriting."
   (print "return ")
   (emit value))
 
+;; Low-level form to directly access object properties/array indexes.
+;; Use `get` (in core library) which support default value when not found
+;; instead
 (defmethod emit "get*" [[_ map key]]
   (with-return-expr []
     (emit map)
