@@ -695,7 +695,7 @@ them instead of rewriting."
   (with-return-expr []
     (binding [*inline-if* true]
       (print "delete ")
-      (emit item))))
+      (emit (transform-get item)))))
 
 (defmethod emit "return" [[_ value]]
   (print "return ")

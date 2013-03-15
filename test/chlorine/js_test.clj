@@ -387,4 +387,6 @@
   (is (= (js (new bar boo buzz))
          "new bar(boo,buzz)"))
   (is (= (js (delete foo))
-         "delete foo")))
+         "delete foo"))
+  (is (= (js (delete (get foo :bar)))
+         "delete foo['bar']")))
