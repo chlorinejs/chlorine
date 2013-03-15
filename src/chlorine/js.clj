@@ -474,7 +474,7 @@ them instead of rewriting."
                                       " be followed by a symbol")))
                   :else
                     (emit-binding vval temp))
-            (do (emit-binding vname `(get ~temp ~i))
+            (do (emit-binding vname `(get* ~temp ~i))
                 (recur (next vseq) (inc i) seen-rest?))))))))
 
 (defn- emit-destructured-map-binding [vmap val]
