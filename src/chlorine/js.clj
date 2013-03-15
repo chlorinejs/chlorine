@@ -436,6 +436,10 @@ them instead of rewriting."
                    :else           emit-simple-binding)]
       (emitter vname val))))
 
+;; Note on choice of get/get* in destructuring:
+;;  - destructuring seq use `get*` for faster array access
+;;  - destructuring map use `get` function which works correctly
+;; on maps and supports default value when not found.
 (defn- emit-destructured-seq-binding [vvec val]
   (let [temp (tempsym)]
     (print (str temp " = "))
