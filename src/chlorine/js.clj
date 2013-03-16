@@ -628,7 +628,7 @@ them instead of rewriting."
       (emit consequent)
       (print " : ")
       (emit alternate))))
-
+;; If 'no', traditional javascript `if` will be used instead.
 (defn emit-block-if [test consequent alternate]
   (print "if (")
   (binding [*return-expr* false
