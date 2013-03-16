@@ -258,11 +258,6 @@ javascript if the symbol isn't marked as reserved ones."
   [property]
   (symbol (subs (name property) 1)))
 
-(defn member-form
-  "Creates a member form from an object and its member."
-  [object member]
-  (symbol (str (name object) "." (name member))))
-
 (defn emit-function-call
   "Emits a function call by simply emitting the function name and its arguments
 in parentheses."
