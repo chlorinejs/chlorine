@@ -410,3 +410,8 @@
          "new bar(boo,buzz)"))
   (is (= (js (delete foo))
          "delete foo")))
+
+(deftest expand-macro-test
+  (borrow-macros '..)
+  (is (= (expand-macro-1 '(.. foo bar))
+         '(. foo bar))))

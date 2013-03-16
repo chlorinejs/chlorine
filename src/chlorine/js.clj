@@ -413,13 +413,16 @@ them instead of rewriting."
                     (fn [& args#]
                       (apply (resolve sym) (concat [nil nil] args#)))}))))
 
+(defn expand-macro-1
+  "Gets and executes macro function, returns the Chlorine code."
+  [[mac-name & args]]
+  (let [mac (get-macro mac-name)]
+     (apply mac args)))
+
 (defn emit-macro-expansion
   "Gets and executes macro function, emits the result as Chlorine code."
   [form]
-  (let [[mac-name & args] form
-        mac (get-macro mac-name)
-        macex (apply mac args)]
-    (emit macex)))
+  (emit (expand-macro-1 form)))
 
 (defn emit-docstring
   "Prints docstrings as javascript comments."
