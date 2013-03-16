@@ -591,6 +591,12 @@ them instead of rewriting."
   (binding [*inline-if* true]
     (emit value)))
 
+;; Macro expansions are useful in REPL.
+;; macroexpand-1 and macroexpand work the like in Clojure except:
+;; - they're special forms, not functions and receive unquoted Chlorine forms
+;; instead of quoted ones like in Clojure.
+;; - they print out code as strings because javascript is not a Lisp.
+
 (defmethod emit "macroexpand-1" [[_ form]]
   (emit (pr-str (expand-macro-1 form))))
 
