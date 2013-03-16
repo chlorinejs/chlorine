@@ -374,6 +374,14 @@
               " case 2: 'two'; break;"
               " default: 'anything-else'; }"))))
 
+(deftest do-test
+  (is (= (binding [*inline-if* true]
+           (js (do 1 2 3)))
+         "(function(){ 1; 2; return 3;})()"))
+  (is (= (binding [*inline-if* false]
+           (js (do 1 2 3)))
+         " 1; 2; 3;")))
+
 (deftest try-catch-finally
   (is (= (js
           (fn* test []
