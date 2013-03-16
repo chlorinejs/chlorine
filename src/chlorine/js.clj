@@ -721,13 +721,14 @@ them instead of rewriting."
                        (newline-indent)
                        (print " })()"))]
     (cond
-     (or *unique-return-expr* *in-fn-toplevel*)
-     (binding [*unique-return-expr* false
-               *in-fn-toplevel* false]
+     *inline-if*
+     (with-return-expr []
+       (emit-let-fun))
+     *unique-return-expr* ;; *in-fn-toplevel*
+     (binding [*unique-return-expr* false]
        (emit-var-decls))
 
-     (or *inline-if*
-         *return-expr*)
+     *return-expr*
      (with-return-expr []
        (emit-let-fun))
 
