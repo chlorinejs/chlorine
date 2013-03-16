@@ -61,13 +61,9 @@ most hardworking multi-method in chlorine library."
   (let [expr (if (and (coll? expr) (seq expr)) (first expr) expr)]
     (if (symbol? expr) (name expr) expr)))
 
-(defn property?
-  "Checks if a form is a property access (a symbol starting with '.-')"
-  [form-name]
-  (and (symbol? form-name) (.startsWith (name form-name) ".-")))
-
-(defn method?
-  "Checks if a form is a method call (a symbol starting with '.')"
+(defn member-form?
+  "Checks if a form is a property access or method call
+(a symbol starting with '.')"
   [form-name]
   (and (symbol? form-name) (= \. (first (name form-name)))))
 
@@ -98,7 +94,7 @@ most hardworking multi-method in chlorine library."
   [s]
   (binding [*quoted* true]
     (emit-str
-      (if (method? s)
+      (if (member-form? s)
         (symbol (subs (name s) 1))
         s))))
 
@@ -282,14 +278,6 @@ emit function calls where function is not a symbol but an other form instead."
   (with-parens [] (emit fun))
   (with-parens [] (emit-delimited "," args)))
 
-(defn emit-method-call
-  "Like emit-function-call, but for method calls."
-  [recvr selector & args]
-  (emit recvr)
-  (emit selector)
-  (with-parens []
-    (with-indent [] (emit-delimited ", " args))))
-
 ;; All Clojure forms return something (even nil). Javascript is imperative
 ;; and its forms may or may not return values. Javascript function bodies
 ;; require a manual `return` keyword.
@@ -317,9 +305,7 @@ and normal function calls."
   (binding [*inline-if* true
             *unique-return-expr* false
             *in-fn-toplevel* false]
-    (let [[fun & args]  form
-          invoke-method (fn [[sel recvr & args]]
-                          (apply emit-method-call recvr sel args))]
+    (let [[fun & args]  form]
       (cond
        ;; those are not normal function calls
        (unary-operator? fun) (apply emit-unary-operator form)
@@ -330,7 +316,9 @@ and normal function calls."
        (let [[map & default] args]
          (emit `(get ~map ~fun ~@default)))
 
-       (method? fun)         (invoke-method form)
+       (member-form? fun)
+       (let [[object & margs] args]
+         (emit `(. ~object ~(normalize-dot-form fun) ~@margs)))
 
        (new-object? fun)
        (emit
