@@ -415,14 +415,16 @@ them instead of rewriting."
 
 (defn expand-macro-1
   "Gets and executes macro function, returns the Chlorine code."
-  [[mac-name & args]]
-  (let [mac (get-macro mac-name)]
-     (apply mac args)))
+  [form]
+  (let [[mac-name & args] form]
+    (if-let [mac (get-macro mac-name)]
+      (apply mac args)
+      form)))
 
 (defn expand-macro
-  "Repeatedly calls macroexpand-1 on form until it no longer
+  "Repeatedly calls expand-macro-1 on form until it no longer
   represents a macro form, then returns it.  Note neither
-  macroexpand-1 nor macroexpand expand macros in subforms."
+  expand-macro-1 nor expand-macro expand macros in subforms."
   [form]
     (let [ex (expand-macro-1 form)]
       (if (identical? ex form)
