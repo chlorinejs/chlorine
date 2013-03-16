@@ -71,6 +71,25 @@ most hardworking multi-method in chlorine library."
   [form-name]
   (and (symbol? form-name) (= \. (first (name form-name)))))
 
+(defn new-object?
+  "Checks if a symbol is a new object call (a symbol ending with '.')"
+  [f]
+  (and (symbol? f) (= \. (last (name f)))))
+
+(defn normalize-dot-form
+  "Normalizes dot forms or new-object forms by removing \".\" from their
+ beginnings or endings."
+  [form]
+  (cond (and (.startsWith (name form) ".")
+             (< 1 (count (name form))))
+        (symbol (subs (name form) 1))
+
+        (and (.endsWith (name form) ".")
+           (< 1 (count (name form))))
+        (symbol (apply str (drop-last (str form))))
+        :default
+        form))
+
 (declare emit-str)
 (declare tojs')
 
@@ -238,6 +257,16 @@ javascript if the symbol isn't marked as reserved ones."
       (with-parens []
         (emit-delimited (str " " js-op " ") args)))))
 
+(defn property->member
+  "Removes `-` prefix in a property name to bring it a member look."
+  [property]
+  (symbol (subs (name property) 1)))
+
+(defn member-form
+  "Creates a member form from an object and its member."
+  [object member]
+  (symbol (str (name object) "." (name member))))
+
 (defn emit-function-call
   "Emits a function call by simply emitting the function name and its arguments
 in parentheses."
@@ -290,8 +319,7 @@ and normal function calls."
             *in-fn-toplevel* false]
     (let [[fun & args]  form
           invoke-method (fn [[sel recvr & args]]
-                          (apply emit-method-call recvr sel args))
-          new-object?   (fn [f] (and (symbol? f) (= \. (last (name f)))))]
+                          (apply emit-method-call recvr sel args))]
       (cond
        ;; those are not normal function calls
        (unary-operator? fun) (apply emit-unary-operator form)
@@ -306,7 +334,7 @@ and normal function calls."
 
        (new-object? fun)
        (emit
-        `(new ~(symbol (apply str (drop-last (str fun))))
+        `(new ~(normalize-dot-form fun)
               ~@args))
 
        ;; Normal function calls:
@@ -715,6 +743,22 @@ them instead of rewriting."
     (print "[")
     (emit key)
     (print "]")))
+
+(defmethod emit "." [[_ object key & args]]
+  (with-return-expr []
+    (emit object)
+    (print ".")
+    (cond
+     (symbol? key)
+     (if (.startsWith (name key) "-")
+       (do (print (property->member key)))
+       (do (print (name key))
+           (with-parens []
+             (with-indent [] (emit-delimited ", " args)))))
+     (coll? key)
+     (do (emit (first key))
+         (with-parens []
+           (with-indent [] (emit-delimited ", " (rest key))))))))
 
 (defmethod emit "set!" [[_ & apairs]]
   (binding [*return-expr* false
