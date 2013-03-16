@@ -661,6 +661,9 @@ them instead of rewriting."
       (emit-inline-if test consequent alternate)
       (emit-block-if test consequent alternate))))
 
+;; Clojure/ChlorineJS `(case ...)`syntax will output
+;; javascript `switch ... case` equivalent.
+
 (defmethod emit "case" [[_ e & clauses]]
   (binding [*unique-return-expr* false
             *in-fn-toplevel* false]
