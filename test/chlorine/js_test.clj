@@ -425,9 +425,15 @@
   (is (= (js (delete (get foo :bar)))
          "delete foo['bar']")))
 
+(borrow-macros '..)
 (deftest expand-macro-test
-  (borrow-macros '..)
   (is (= (expand-macro-1 '(.. foo bar))
          '(. foo bar)))
   (is (= (expand-macro '(.. foo (bar) (buzz)))
          '(. (. foo (bar)) (buzz)))))
+
+(deftest macroexpand-1-test
+  (is (= (js (macroexpand-1 (.. foo (bar) (buzz))))
+         "\"(.. (. foo (bar)) (buzz))\""))
+  (is (= (js (macroexpand (.. foo (bar) (buzz))))
+         "\"(. (. foo (bar)) (buzz))\"")))

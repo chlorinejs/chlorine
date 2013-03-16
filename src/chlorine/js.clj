@@ -606,6 +606,12 @@ them instead of rewriting."
   (binding [*inline-if* true]
     (emit value)))
 
+(defmethod emit "macroexpand-1" [[_ form]]
+  (emit (pr-str (expand-macro-1 form))))
+
+(defmethod emit "macroexpand" [[_ form]]
+  (emit (pr-str (expand-macro form))))
+
 ;; Low-level function form. Please use `fn` and `defn` macros instead
 (defmethod emit "fn*" [[_ & fdecl]]
   (with-return-expr []
