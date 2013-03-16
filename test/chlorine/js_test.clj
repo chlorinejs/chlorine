@@ -433,6 +433,8 @@
          '(. (. foo (bar)) (buzz)))))
 
 (deftest macroexpand-1-test
+  (is (= (js (macroexpand-1 (. foo (bar))))
+         "\"(. foo (bar))\""))
   (is (= (js (macroexpand-1 (.. foo (bar) (buzz))))
          "\"(.. (. foo (bar)) (buzz))\""))
   (is (= (js (macroexpand (.. foo (bar) (buzz))))
