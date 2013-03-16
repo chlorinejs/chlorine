@@ -608,6 +608,17 @@ them instead of rewriting."
   (with-return-expr []
     (with-block (emit-function fdecl))))
 
+;; Javascript's `if` expressions don't return values directly [1]. That's
+;; opposite to Clojure/Chlorine where returning something is a must
+;; (functional programming means efficiency!)
+;; Just keep writing `(if exprs)` as usual, and ChlorineJS will determine
+;; whether an `if` expression should return a value *directly* or not.
+;; If 'yes', outputs the "inline" syntax as following:
+;; `{{test}} ? {{consequent}}: {{alternate}}`
+;;
+;; [1]: Javascript's `if` with `return` in it is for the upper
+;; function but itself
+
 (defn emit-inline-if
   [test consequent alternate]
   (with-return-expr []
