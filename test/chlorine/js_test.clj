@@ -111,6 +111,18 @@
               " return (1 + 1);; }"
               ))))
 
+(deftest normalize-dot-form-test
+  (is (= (normalize-dot-form '.)
+         '.))
+  (is (= (normalize-dot-form '.f)
+         'f))
+  (is (= (normalize-dot-form '.foo)
+         'foo))
+  (is (= (normalize-dot-form 'Foo.)
+         'Foo))
+  (is (= (normalize-dot-form 'F.)
+         'F)))
+
 (deftest method?-property?-tests
   (is (= (method? '.foo)
          true))
@@ -122,6 +134,20 @@
          "map['key']"))
   (is (= (js (:key map))
          "get(map, 'key')")))
+
+(deftest dot-form-test
+  (is (= (js (. foo -bar))
+         "foo.bar"))
+  (is (= (js (. foo bar))
+         "foo.bar()"))
+  (is (= (js (. foo bar :bazz 0))
+         "foo.bar('bazz', 0)"))
+  (is (= (js (.bar foo))
+         "foo.bar()"))
+  (is (= (js (.bar (new foo)))
+         "new foo().bar()"))
+  (is (= (js (. (. a (b 1)) (c 2)))
+         "a.b(1).c(2)")))
 
 (deftest destructuring
   (is (= (js
@@ -378,6 +404,8 @@
          "var x = 1")))
 
 (deftest new-and-delete-tests
+  (is (= (js (Foo. :bar))
+         "new Foo('bar')"))
   (is (= (js (new bar boo buzz))
          "new bar(boo,buzz)"))
   (is (= (js (delete foo))
