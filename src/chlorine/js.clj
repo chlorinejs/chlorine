@@ -601,6 +601,10 @@ them instead of rewriting."
   (emit (clojure.string/replace (pr-str (expand-macro-1 form))
                                 "clojure.core/" "")))
 
+;; These functions use pr-str to convert code to string which produces
+;; some "clojure.core/" in the result. So we remove that string before
+;; send it to users.
+
 (defmethod emit "macroexpand" [[_ form]]
   (emit (clojure.string/replace (pr-str (expand-macro form))
                                 "clojure.core/" "")))
