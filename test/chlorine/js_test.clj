@@ -424,3 +424,8 @@
          "delete foo"))
   (is (= (js (delete (get foo :bar)))
          "delete foo['bar']")))
+
+(deftest expand-macro-test
+  (borrow-macros '..)
+  (is (= (expand-macro-1 '(.. foo bar))
+         '(. foo bar))))
