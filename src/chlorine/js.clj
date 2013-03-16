@@ -654,12 +654,9 @@ them instead of rewriting."
 (defmethod emit "if" [[_ test consequent & [alternate]]]
   ;; emit consequent directly without printing checks
   ;; used to optimize `cond` macro output
-  (if (or (keyword? test)
-          (true? test))
-    (emit-statement consequent)
-    (if (and *inline-if* consequent)
-      (emit-inline-if test consequent alternate)
-      (emit-block-if test consequent alternate))))
+  (if (and *inline-if* consequent)
+    (emit-inline-if test consequent alternate)
+    (emit-block-if test consequent alternate)))
 
 ;; Clojure/ChlorineJS `(case ...)`syntax will output
 ;; javascript `switch ... case` equivalent.
