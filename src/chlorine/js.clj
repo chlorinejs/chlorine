@@ -598,10 +598,12 @@ them instead of rewriting."
 ;; - they print out code as strings because javascript is not a Lisp.
 
 (defmethod emit "macroexpand-1" [[_ form]]
-  (emit (pr-str (expand-macro-1 form))))
+  (emit (clojure.string/replace (pr-str (expand-macro-1 form))
+                                "clojure.core/" "")))
 
 (defmethod emit "macroexpand" [[_ form]]
-  (emit (pr-str (expand-macro form))))
+  (emit (clojure.string/replace (pr-str (expand-macro form))
+                                "clojure.core/" "")))
 
 ;; Low-level function form. Please use `fn` and `defn` macros instead
 (defmethod emit "fn*" [[_ & fdecl]]
