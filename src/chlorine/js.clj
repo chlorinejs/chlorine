@@ -2,7 +2,7 @@
   (:require [clojure.string :as str])
   (:use [chlorine.reader]
         [pathetic.core :only [normalize]]
-        [chlorine.util :only [flatten-files unzip assert-args
+        [chlorine.util :only [url? resource-path? to-resource unzip assert-args
                               *cwd* *cpd* file-and-dir
                               re? replace-map]]))
 
@@ -987,12 +987,15 @@ translate the Clojure subset `exprs' to a string of javascript code."
 
 (defn raw-script [& scripts]
   (with-out-str
-    (doseq [script (apply flatten-files scripts)]
+    (doseq [script scripts]
       (let [[file dir] (file-and-dir script)
-            f (if (vector? file)
-                (clojure.java.io/resource
-                 (clojure.string/replace (second file) #"^/" ""))
-                file)]
+            f (cond
+               (resource-path? file)
+               (to-resource file)
+
+               (or (url? file)
+                   (.isFile (clojure.java.io/file file)))
+               file)]
         (print (slurp f))))))
 
 (defn tojs'
@@ -1000,16 +1003,14 @@ translate the Clojure subset `exprs' to a string of javascript code."
 varies depending on states such as macros, temporary symbol count etc."
   [& scripts]
   (with-out-str
-    (doseq [script (apply flatten-files scripts)]
+    (doseq [script scripts]
       (let [[file dir] (file-and-dir script)
             f (cond
-               (vector? file)
-               (clojure.java.io/resource
-                (clojure.string/replace (second file) #"^/" ""))
+               (resource-path? file)
+               (to-resource file)
 
-               (or (.isFile (clojure.java.io/file file))
-                   (.startsWith file "http://")
-                   (.startsWith file "https://"))
+               (or (url? file)
+                   (.isFile (clojure.java.io/file file)))
                file)]
         (binding [*cwd* dir]
           (try
