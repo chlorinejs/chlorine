@@ -3,5 +3,5 @@
   :url "http://github.com/chlorinejs/chlorine"
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [pathetic "0.4.0" :exclusions [org.clojure/clojure]]
-                 [chlorine-utils "1.0.0"]
+                 [chlorine-utils "1.1.0"]
                  [org.clojure/tools.reader "0.7.2"]])
