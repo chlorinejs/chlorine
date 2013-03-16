@@ -336,12 +336,19 @@
          )))
 
 (deftest if-tests
-  (is (= (js
-          (if a b c))
+  (is (= (js (if a b c))
          "if (a) { b; } else { c; }"))
-  (is (= (js
-          (if :else (something) ignore-me))
-         " something();")))
+  (is (= (js (if :a b c))
+         "if ('a') { b; } else { c; }"))
+  (is (= (js (def x (if x :a :b)))
+         "var x = (x ? 'a' : 'b')"))
+  (is (= (js (def x (if true :a :b)))
+         "var x = (true ? 'a' : 'b')"))
+  (is (= (js (fn* [] (if a b c)))
+         "function () { if (a) { return b; } else { return c; }; }"))
+  (is (= (js (fn* [] (if :true b c)))
+         "function () { if ('true') { return b; } else { return c; }; }"))
+  )
 
 (deftest inline-primitives
   (is (= (js (fn* isac? [i c] (inline "i instanceof c")))
