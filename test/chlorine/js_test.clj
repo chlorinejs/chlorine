@@ -123,10 +123,10 @@
   (is (= (normalize-dot-form 'F.)
          'F)))
 
-(deftest method?-property?-tests
-  (is (= (method? '.foo)
+(deftest member-form?-tests
+  (is (= (member-form? '.foo)
          true))
-  (is (= (property? '.-bar)
+  (is (= (member-form? '.-bar)
          true)))
 
 (deftest property-access
@@ -137,6 +137,8 @@
 
 (deftest dot-form-test
   (is (= (js (. foo -bar))
+         "foo.bar"))
+  (is (= (js (.-bar foo))
          "foo.bar"))
   (is (= (js (. foo bar))
          "foo.bar()"))
