@@ -1,5 +1,7 @@
 (ns chlorine.js
-  (:require [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [hiccup.core]
+            [clojure.walk])
   (:use [chlorine.reader]
         [pathetic.core :only [normalize]]
         [chlorine.util :only [url? resource-path? to-resource unzip assert-args
