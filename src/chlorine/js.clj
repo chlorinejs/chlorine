@@ -747,6 +747,18 @@ them instead of rewriting."
      :default
      (emit-let-fun))))
 
+;; "Leaky" versions of `let` that don't wrap anything inside a function.
+(defmethod emit "let!" [[_ & bindings]]
+  (binding [*return-expr* false]
+    (with-block (emit-var-bindings bindings))
+    (print ";")))
+
+(defmethod emit "let*" [[_ & bindings]]
+  (print "var ")
+  (binding [*return-expr* false]
+    (with-block (emit-var-bindings bindings))
+    (print ";")))
+
 (defmethod emit "new" [[_ class & args]]
   (with-return-expr []
     (binding [*inline-if* true]
