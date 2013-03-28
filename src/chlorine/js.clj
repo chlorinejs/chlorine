@@ -710,6 +710,13 @@ them instead of rewriting."
       (print "})()"))
     (emit-statements-with-return exprs)))
 
+;; `let` is a Clojure fundamental form that provides lexical bindings
+;; of data structures to symbols.
+;; The binding is available only within the lexical context of the let.
+;;
+;; Chlorine implements the same behavior of `let` by wrapping the body
+;; inside a function in most cases.
+
 (defmethod emit "let" [[_ bindings & exprs]]
   (let [emit-var-decls (fn []
                          (print "var ")
