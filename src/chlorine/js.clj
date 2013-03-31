@@ -744,8 +744,7 @@ them instead of rewriting."
 
      *return-expr*
      (with-return-expr []
-       (emit-let-fun)
-       (print ";"))
+       (emit-let-fun))
 
      :default
      (do (emit-let-fun)
