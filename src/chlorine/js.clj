@@ -333,7 +333,8 @@ and normal function calls."
 (defn emit-statement [expr]
   (binding [*inline-if* false]
     ;; defining a macro prints out nothing
-    (if (and (coll? expr) (= 'defmacro (first expr)))
+    (if (and (coll? expr) (#{'defmacro 'include-raw! 'include! 'import!}
+                           (first expr)))
       (emit expr)
       (do
         (newline-indent)
