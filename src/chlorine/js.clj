@@ -338,7 +338,7 @@ and normal function calls."
       (do
         (newline-indent)
         (emit expr)
-        (when-not (and (coll? expr) (#{'do } (first expr)))
+        (when-not (and (coll? expr) (#{'do 'let} (first expr)))
             (print ";"))))))
 
 (defn emit-statements [exprs]
@@ -743,10 +743,12 @@ them instead of rewriting."
 
      *return-expr*
      (with-return-expr []
-       (emit-let-fun))
+       (emit-let-fun)
+       (print ";"))
 
      :default
-     (emit-let-fun))))
+     (do (emit-let-fun)
+         (print ";")))))
 
 ;; "Leaky" versions of `let` that don't wrap anything inside a function.
 (defmethod emit "let!" [[_ & bindings]]
