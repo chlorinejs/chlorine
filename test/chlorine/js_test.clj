@@ -454,3 +454,24 @@
          "\"(.. (. foo (bar)) (buzz))\""))
   (is (= (js (macroexpand (.. foo (bar) (buzz))))
          "\"(. (. foo (bar)) (buzz))\"")))
+
+(deftest dofor-test
+  (is (= (js
+          (dofor [(let* i 0
+                        j 1)
+                  (< i 5)
+                  (set! i (+* i 1))]
+                 1))
+         "for ( var i = 0, j = 1; (i < 5); i = (i + 1);) { 1; }"))
+  (is (= (js
+          (dofor [(def i 0)
+                  (< i 5)
+                  (set! i (+* i 1))]
+                 1))
+         "for ( var i = 0; (i < 5); i = (i + 1);) { 1; }"))
+  (is (= (js
+          (dofor [[i 0 j 1]
+                  (< i 5)
+                  (set! i (+* i 1))]
+                 1))
+         "for ( var i = 0, j = 1; (i < 5); i = (i + 1);) { 1; }")))
