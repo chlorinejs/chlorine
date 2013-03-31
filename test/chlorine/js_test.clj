@@ -106,7 +106,7 @@
               " return log((a * a));"
               "  })();"
               "  log(\"test\");"
-              " return (1 + 1);; }"
+              " return (1 + 1); }"
               ))))
 
 (deftest normalize-dot-form-test
