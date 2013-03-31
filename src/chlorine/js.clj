@@ -339,7 +339,7 @@ and normal function calls."
       (do
         (newline-indent)
         (emit expr)
-        (when-not (and (coll? expr) (#{'do 'let} (first expr)))
+        (when-not (and (coll? expr) (#{'do 'let 'let*} (first expr)))
             (print ";"))))))
 
 (defn emit-statements [exprs]
@@ -926,15 +926,11 @@ them instead of rewriting."
 
 (defmethod emit "dofor" [[_ [init-bindings test update] & body]]
   (let [init (if (vector? init-bindings)
-               (concat ['lvar] init-bindings)
+               `(let* ~@init-bindings)
                init-bindings)]
     (binding [*return-expr* false]
       (print "for (")
-      (emit init)
-      (print ";")
-      (emit test)
-      (print ";")
-      (emit update)
+      (emit-statements [init test update])
       (print ") {")
       (with-indent []
         (emit-statements body))
