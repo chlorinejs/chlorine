@@ -338,7 +338,8 @@ and normal function calls."
       (do
         (newline-indent)
         (emit expr)
-        (print ";")))))
+        (when-not (and (coll? expr) (#{'do } (first expr)))
+            (print ";"))))))
 
 (defn emit-statements [exprs]
   (doseq [expr exprs]
