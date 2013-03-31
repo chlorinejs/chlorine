@@ -94,7 +94,7 @@
                " return (function () {"
                " var a = 2;"
                " return log((a * a));"
-               "  })(); }"
+               "  })() }"
                )))
   (is (= (js
           (fn* test []
