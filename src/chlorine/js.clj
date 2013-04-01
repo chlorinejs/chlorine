@@ -333,12 +333,14 @@ and normal function calls."
 (defn emit-statement [expr]
   (binding [*inline-if* false]
     ;; defining a macro prints out nothing
-    (if (and (coll? expr) (= 'defmacro (first expr)))
+    (if (and (coll? expr) (#{'defmacro 'include-raw! 'include! 'import!}
+                           (first expr)))
       (emit expr)
       (do
         (newline-indent)
         (emit expr)
-        (print ";")))))
+        (when-not (and (coll? expr) (#{'do 'let 'let*} (first expr)))
+            (print ";"))))))
 
 (defn emit-statements [exprs]
   (doseq [expr exprs]
@@ -710,6 +712,13 @@ them instead of rewriting."
       (print "})()"))
     (emit-statements-with-return exprs)))
 
+;; `let` is a Clojure fundamental form that provides lexical bindings
+;; of data structures to symbols.
+;; The binding is available only within the lexical context of the let.
+;;
+;; Chlorine implements the same behavior of `let` by wrapping the body
+;; inside a function in most cases.
+
 (defmethod emit "let" [[_ bindings & exprs]]
   (let [emit-var-decls (fn []
                          (print "var ")
@@ -738,7 +747,20 @@ them instead of rewriting."
        (emit-let-fun))
 
      :default
-     (emit-let-fun))))
+     (do (emit-let-fun)
+         (print ";")))))
+
+;; "Leaky" versions of `let` that don't wrap anything inside a function.
+(defmethod emit "let!" [[_ & bindings]]
+  (binding [*return-expr* false]
+    (with-block (emit-var-bindings bindings))
+    (print ";")))
+
+(defmethod emit "let*" [[_ & bindings]]
+  (print "var ")
+  (binding [*return-expr* false]
+    (with-block (emit-var-bindings bindings))
+    (print ";")))
 
 (defn transform-get
   "Transforms `get` to `get*` to access object properties"
@@ -903,15 +925,11 @@ them instead of rewriting."
 
 (defmethod emit "dofor" [[_ [init-bindings test update] & body]]
   (let [init (if (vector? init-bindings)
-               (concat ['lvar] init-bindings)
+               `(let* ~@init-bindings)
                init-bindings)]
     (binding [*return-expr* false]
       (print "for (")
-      (emit init)
-      (print ";")
-      (emit test)
-      (print ";")
-      (emit update)
+      (emit-statements [init test update])
       (print ") {")
       (with-indent []
         (emit-statements body))
