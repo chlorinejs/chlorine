@@ -167,6 +167,7 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 ;; The mapping used to do the replacements
 (def ^:dynamic *symbol-map*
   (array-map
+   #"^boolean$" "boolean*"
    #"^int$" "int*"
    "$"  "$USD$"
    "->" "$ARROW$"
