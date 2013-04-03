@@ -328,11 +328,10 @@
             ((if (> a 0) minus plus) a 1)))
          "function test (a) { return (((a > 0) ? minus : plus))(a,1); }"))
 
-  ;; implicit `null` alternate
   (is (= (js (fn* test [a] (console.log (if (> a 0) a))))
          (str "function test (a) {"
               " return console.log("
-              "((a > 0) ? a : undefined)); }")
+              "((a > 0) ? a : void(0))); }")
          )))
 
 (deftest if-tests
