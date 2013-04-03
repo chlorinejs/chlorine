@@ -965,7 +965,7 @@ them instead of rewriting."
        (char? expr) (print (format "'%c'" expr))
        (and *quoted* (coll? expr)) (emit-vector expr)
        (coll? expr) (emit-function-form expr)
-       (nil? expr) (print "undefined")
+       (nil? expr) (print "void(0)")
        true (print expr)
        ))))
 
