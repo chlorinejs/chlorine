@@ -720,7 +720,9 @@ them instead of rewriting."
     (do
       (print "(function(){")
       (binding [*return-expr* true]
-        (emit-statements-with-return exprs))
+        (with-indent []
+          (newline-indent)
+          (emit-statements-with-return exprs)))
       (print "})()"))
     (emit-statements-with-return exprs)))
 
