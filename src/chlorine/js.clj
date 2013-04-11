@@ -672,7 +672,7 @@ them instead of rewriting."
 ;; Clojure/ChlorineJS `(case ...)`syntax will output
 ;; javascript `switch ... case` equivalent.
 
-(defmethod emit "case" [[_ e & clauses]]
+(defn emit-case [e clauses]
   (binding [*unique-return-expr* false
             *in-fn-toplevel* false]
     (let [pairs (partition 2 clauses)]
@@ -703,6 +703,17 @@ them instead of rewriting."
             (emit-statement (last clauses)))))))
   (newline-indent)
   (print "}"))
+
+(defmethod emit "case" [[_ e & clauses]]
+  (if *inline-if*
+    (do
+      (print "(function(){")
+      (binding [*return-expr* true]
+        (with-indent []
+          (newline-indent)
+          (emit-case e clauses)))
+      (print "})()"))
+    (emit-case e clauses)))
 
 (defmethod emit "do" [[_ & exprs]]
   (if *inline-if*

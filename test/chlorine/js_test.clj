@@ -366,6 +366,21 @@
   (is (= (js (case answer 42 (bingo) 24 (tiny)))
          (str "switch (answer) {"
               " case 42: bingo(); break; case 24: tiny(); break; }")))
+  (is (= (js (fn* foo [answer] (case answer 42 (bingo) 24 (tiny))))
+         (str "function foo (answer) {"
+              " switch (answer) {"
+              " case 42: return bingo(); "
+              " case 24: return tiny();  }; }")))
+  (is (= (with-pretty-print (js (def foo (case answer 42 (bingo) 24 (tiny)))))
+         (str "var foo = (function(){\n"
+              "    switch (answer) {\n"
+              "        case 42:\n"
+              "            return bingo();\n"
+              "            \n"
+              "        case 24:\n"
+              "            return tiny();\n"
+              "            \n"
+              "    }})()")))
   (is (= (js (case answer (+* 10 20) (bingo)))
          "switch (answer) { case (10 + 20): bingo(); break; }"))
   (is (= (js (case answer "text" (foo) (+* 10 20) (bingo)))
