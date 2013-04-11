@@ -154,8 +154,9 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
     (binding [*inline-if* true]
       (emit-delimited "," (seq expr)))))
 
-(defn- emit-re [expr]
-  (print (str expr)))
+(defn emit-re [expr]
+  (let [[_ flags pattern] (re-find #"^(?:\(\?([idmsux]*)\))?(.*)" (str expr))]
+    (print (str \/ (.replaceAll (re-matcher #"/" pattern) "\\\\/") \/ flags))))
 
 ;; Symbols are Chlorine's amazing pieces. We have a wide range of valid
 ;; characters for Chlorine just like Clojure. You can use Lisp-style naming
