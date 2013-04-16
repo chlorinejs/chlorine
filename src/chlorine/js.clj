@@ -548,26 +548,34 @@ them instead of rewriting."
           (condp = vname
             '&  (cond
                   seen-rest?
-                    (throw
-                     (Exception.
-                      "Unsupported binding form, only :as can follow &"))
+                    (throw+
+                     {:known-error true
+                      :msg (str "Unsupported binding form `" vvec "`:\n"
+                                "only `:as` can follow `&`")
+                      :causes [vvec]})
                   (not (symbol? vval))
-                    (throw
-                     (Exception.
-                      (str "Unsupported binding form, & must be"
-                           " followed by exactly one symbol")))
+                    (throw+
+                     {:known-error true
+                      :msg
+                      (str  "Unsupported binding form `" vvec "`:\n"
+                            "`&` must be followed by exactly one symbol")
+                      :causes [vvec]})
                   :else
                     (do (emit-binding vval `(.slice ~temp ~i))
                         (recur (nnext vseq) (inc i) true)))
             :as (cond
                   (not= (count (nnext vseq)) 0)
-                    (throw
-                     (Exception. (str "Unsupported binding form, nothing"
-                                      " must follow after :as <binding>")))
+                    (throw+
+                     {:known-error true
+                      :msg (str "Unsupported binding form `" vvec "`:\n"
+                                "nothing may follow after `:as <binding>`")
+                      :causes [vvec]})
                   (not (symbol? vval))
-                    (throw
-                     (Exception. (str "Unsupported binding form, :as must"
-                                      " be followed by a symbol")))
+                    (throw+
+                     {:known-error true
+                      :msg (str "Unsupported binding form, `" vvec "`:\n"
+                                "`:as` must be followed by a symbol")
+                      :causes [vvec]})
                   :else
                     (emit-binding vval temp))
             (do (emit-binding vname `(get* ~temp ~i))
