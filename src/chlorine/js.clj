@@ -392,7 +392,7 @@ and normal function calls."
   (when (not= 'nil (last exprs))
     (emit-statement (last exprs))))
 
-;; Lisper love macros. In fact, making a macro means writing a function
+;; Lispers love macros. In fact, making a macro means writing a function
 ;; that returns some code. Chlorine macros are nearly Clojure ones:
 ;; you can write the function (by `defmacro`) using all Clojure expressions,
 ;; even ones from external Clojure libraries (if you've already loaded them).
