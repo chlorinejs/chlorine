@@ -441,10 +441,18 @@ and normal function calls."
 them instead of rewriting."
   [& syms]
   (doseq [sym syms]
-    (dosync (alter *macros* conj
-                   {(name sym)
-                    (fn [& args#]
-                      (apply (resolve sym) (concat [nil nil] args#)))}))))
+    (dosync
+     (alter *macros* conj
+            {(name sym)
+             (try+
+              (fn [& args#]
+                (apply (resolve sym) (concat [nil nil] args#)))
+              (catch Throwable e
+                (throw+ {:known-error true
+                         :msg (str "Error borrowing macro `" sym "`:\n"
+                                   (.getMessage e))
+                         :causes [`(borrow-macros ~sym)]
+                         :trace e})))}))))
 
 (defn expand-macro-1
   "Gets and executes macro function, returns the Chlorine code."
