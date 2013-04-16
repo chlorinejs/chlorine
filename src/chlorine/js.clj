@@ -411,7 +411,9 @@ and normal function calls."
   "Gets the macro function by its name in order to generate code."
   [n] (and (symbol? n) (get @*macros* (name n))))
 
-(defn undef-macro [n]
+(defn undef-macro
+  "Removes a macro from known macro list."
+  [n]
   (when (macro? n)
     (when *print-pretty* (println "// undefining macro" n))
     (dosync (alter *macros* dissoc (name n)))))
