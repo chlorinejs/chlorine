@@ -1040,8 +1040,7 @@ them instead of rewriting."
        (and *quoted* (coll? expr)) (emit-vector expr)
        (coll? expr) (emit-function-form expr)
        (nil? expr) (print "void(0)")
-       true (print expr)
-       ))))
+       true (print expr)))))
 
 (defn emit-str [expr]
   (binding [*return-expr* false
