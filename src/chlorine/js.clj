@@ -459,13 +459,14 @@ them instead of rewriting."
   [form]
   (let [[mac-name & args] form]
     (if-let [mac (get-macro mac-name)]
-      (try
-        (apply mac args)
-        (catch Throwable e
-          (throw (Exception.
-                  (str "Error expanding macro form: "
-                       form "\n"
-                       e)))))
+      (try+
+       (apply mac args)
+       (catch Throwable e
+         (throw+ {:known-error true
+                  :msg   (str "Error expanding macro `" form "`:\n"
+                              (.getMessage e))
+                  :causes [form]
+                  :trace e})))
       form)))
 
 (defn expand-macro
