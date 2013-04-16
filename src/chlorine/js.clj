@@ -1035,7 +1035,9 @@ translate the Clojure subset `exprs' to a string of javascript code."
 ;; Sometimes you only want to load macros from an outside file and print out
 ;; nothing. Use `import!` then
 (defmethod emit "import!" [[_ & files]]
-  (apply tojs' files))
+  (doseq [file files]
+    (when *print-pretty* (println "// Imports file: " file))
+    (tojs' file)))
 
 ;; Inlines raw javascript from files instead of Chlorine ones.
 (defmethod emit "include-raw!" [[_ & files]]
