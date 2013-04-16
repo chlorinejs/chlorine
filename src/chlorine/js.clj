@@ -355,17 +355,28 @@ and normal function calls."
 
        true                  (apply emit-function-call form)))))
 
-(defn emit-statement [expr]
-  (binding [*inline-if* false]
-    ;; defining a macro prints out nothing
-    (if (and (coll? expr) (#{'defmacro 'include-raw! 'include! 'import!}
-                           (first expr)))
-      (emit expr)
-      (do
-        (newline-indent)
-        (emit expr)
-        (when-not (and (coll? expr) (#{'do 'let 'let*} (first expr)))
-            (print ";"))))))
+(defn emit-statement
+  "Emits an expression with trailing `;` and `newline-indent` if necessary."
+  [expr]
+  (try+
+   (binding [*inline-if* false]
+     (if (and (coll? expr) (#{'defmacro 'include-raw! 'include! 'import!}
+                            (first expr)))
+       (emit expr)
+       (do
+         (newline-indent)
+         (emit expr)
+         (when-not (and (coll? expr) (#{'do 'let 'let*} (first expr)))
+           (print ";")))))
+   (catch map? e
+     (throw+ (merge e
+                    {:causes (conj (or (:causes e) [])
+                                   expr)})))
+   (catch Throwable e
+     (throw+ {:known-error false
+              :msg (.getMessage e)
+              :causes [expr]
+              :trace e}))))
 
 (defn emit-statements [exprs]
   (doseq [expr exprs]
