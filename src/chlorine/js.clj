@@ -117,6 +117,18 @@ function arguments etc."
 
 ;; several functions to emit Clojure data of
 ;;  map, set, vector, regexp, symbol and keyword types
+(defn valid-map-key?
+  "Checks a map's key before emitting. Valid keys are elements which can be
+  converted to strings."
+  [key]
+  (or (string?  key)
+      (keyword? key)
+      (number?  key)
+      (symbol?  key)
+      (and (seq? key)
+           (= 2 (count key))
+           (= 'quote  (first key))
+           (symbol? (second key)))))
 
 (defn emit-map
   "Clojure maps are emitted to javascript key/value objects.
@@ -125,12 +137,22 @@ Keys can only be strings. Keywords and quoted symbols don't really make
   [expr]
   (with-parens ["{" "}"]
     (binding [*inline-if* true]
-      (emit-delimited ","
-                      (seq expr)
-                      (fn [[key val]]
-                        (emit key)
-                        (print " : ")
-                        (emit val))))))
+      (emit-delimited
+       ","
+       (seq expr)
+       (fn [[key val]]
+         (if (valid-map-key? key)
+           (emit key)
+           (throw+ {:known-error true
+                    :msg
+                    (str "Error emitting this map `"
+                         expr "`:\n"
+                         "Invalid map key: `" key "`.\n"
+                         "Valid keys are elements which can be"
+                         " converted to strings.")
+                    :causes [expr key]}))
+         (print " : ")
+         (emit val))))))
 
 (defn emit-set
   "Clojure sets are emitted to javascript key/value objects whose
