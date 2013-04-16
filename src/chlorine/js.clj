@@ -951,8 +951,7 @@ them instead of rewriting."
             (newline-indent)
             (emit-for-block))
           (newline-indent))
-        (print "}).call(this)"))
-      )))
+        (print "}).call(this)")))))
 
 (defmethod emit "recur" [[_ & args]]
   (binding [*return-expr* false]
