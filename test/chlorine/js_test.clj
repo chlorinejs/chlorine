@@ -1,6 +1,7 @@
 (ns chlorine.js-test
   (:use [chlorine.js]
         [clojure.test]
+        [slingshot.slingshot]
         [chlorine.util]))
 
 (dosync (ref-set *macros* {}))
@@ -297,9 +298,13 @@
               " y = get(all, 'y');"
               " return [x,y,all]; }")))
   ;; unsupported for now
-  (is (thrown-with-msg? Exception #"& must be followed by"
-        (js
-         (fn* [x y & {z :z}] z)))))
+  (is (= (try+
+          (js
+           (fn* [x y & {z :z}] z))
+          (catch [:known-error true] e
+            (:msg e)))
+         (str "Unsupported binding form `[x y & {z :z}]`:\n"
+              "`&` must be followed by exactly one symbol"))))
 
 (deftest loops
   (is (= (js
