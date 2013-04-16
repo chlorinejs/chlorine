@@ -389,8 +389,7 @@ and normal function calls."
     (dosync
      (alter *macros*
             conj
-            {(name mname) (eval `(clojure.core/fn ~@mdeclrs))})))
-  nil)
+            {(name mname) (eval `(clojure.core/fn ~@mdeclrs))}))))
 
 (defn borrow-macros
   "Many Clojure macros work the same in Chlorine. Use this function to reuse
