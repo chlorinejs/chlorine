@@ -3,6 +3,7 @@
             [hiccup.core]
             [clojure.walk])
   (:use [chlorine.reader]
+        [slingshot.slingshot]
         [pathetic.core :only [normalize]]
         [chlorine.util :only [url? resource-path? to-resource unzip assert-args
                               *cwd* *cpd* file-and-dir
