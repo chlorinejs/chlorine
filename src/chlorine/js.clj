@@ -1025,7 +1025,12 @@ translate the Clojure subset `exprs' to a string of javascript code."
 ;; done with `include!`
 
 (defmethod emit "include!" [[_ & files]]
-  (print (str (apply tojs' files))))
+  ;(print (str (apply tojs' files)))
+  (doseq [file files]
+    (when *print-pretty* (println "// <-- Starts included file: " file))
+    (if-let [content (tojs' file)]
+      (print (str content)))
+    (when *print-pretty* (println "// Ends included file: " file " -->"))))
 
 ;; Sometimes you only want to load macros from an outside file and print out
 ;; nothing. You `import!` then
