@@ -1033,7 +1033,7 @@ translate the Clojure subset `exprs' to a string of javascript code."
     (when *print-pretty* (println "// Ends included file: " file " -->"))))
 
 ;; Sometimes you only want to load macros from an outside file and print out
-;; nothing. You `import!` then
+;; nothing. Use `import!` then
 (defmethod emit "import!" [[_ & files]]
   (apply tojs' files))
 
