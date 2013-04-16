@@ -585,24 +585,26 @@ them instead of rewriting."
   (let [temp     (or (:as vmap) (tempsym))
         defaults (get vmap :or)
         keysmap  (reduce #(assoc %1 %2 (keyword %2))
-                  {}
-                  (mapcat vmap [:keys :strs :syms]))
+                         {}
+                         (mapcat vmap [:keys :strs :syms]))
         vmap     (merge (dissoc vmap :as :or :keys :strs :syms) keysmap)]
     (print (str temp " = "))
     (emit val)
     (doseq [[vname vkey] vmap]
       (print ", ")
       (cond
-        (not (and (binding-form? vname)
-                  (or (some #(% vkey) #{keyword? number? binding-form?}))))
-          (throw
-           (Exception. (str "Unsupported binding form, binding symbols "
-                            "must be followed by keywords or numbers")))
+       (not (and (binding-form? vname)
+                 (or (some #(% vkey) #{keyword? number? binding-form?}))))
+       (throw+
+        {:known-error true
+         :msg (str "Unsupported binding form `" vmap "`:\n"
+                   "binding symbols must be followed by keywords or numbers")
+         :causes [vmap]})
 
-        :else
-          (if-let [[_ default] (find defaults vname)]
-            (emit-binding vname `(get ~temp ~vkey ~default))
-            (emit-binding vname `(get ~temp ~vkey)))))))
+       :else
+       (if-let [[_ default] (find defaults vname)]
+         (emit-binding vname `(get ~temp ~vkey ~default))
+         (emit-binding vname `(get ~temp ~vkey)))))))
 
 (defn- emit-var-bindings [bindings]
   (binding [*return-expr* false]
