@@ -1077,8 +1077,6 @@ translate the Clojure subset `exprs' to a string of javascript code."
     `(with-out-str
        (js-emit ~body#))))
 
-(def ^:dynamic *last-sexpr* nil)
-
 (declare raw-script)
 
 ;; Chlorine doesn't support an official way to modularize code like Clojure
@@ -1128,6 +1126,7 @@ varies depending on states such as macros, temporary symbol count etc."
   [& scripts]
   (with-out-str
     (doseq [script scripts]
+      ;; converts to absolute paths:
       (let [[file dir] (file-and-dir script)
             f (cond
                (resource-path? file)
@@ -1137,22 +1136,39 @@ varies depending on states such as macros, temporary symbol count etc."
                    (.isFile (clojure.java.io/file file)))
                file)]
         (binding [*cwd* dir]
-          (try
-            (if (nil? f) (throw (Exception. "File not found!")))
-            (with-open [in (sexp-reader f)]
-              (loop [expr (read in false :eof)]
-                (when (not= expr :eof)
-                  (if-let [s (emit-statement expr)]
-                    (print s)
-                    (dosync
-                     (ref-set *last-sexpr* expr)))
-                  (recur (read in false :eof)))))
-            (catch Throwable e
-              (throw (new Throwable
-                          (str
-                           "Error translating script " f
-                           " last s-expr " @*last-sexpr*)
-                          e)))))))))
+          (try+
+           (if (nil? f) (throw+ {:known-error true
+                                 :msg
+                                 "File not found `" file "`"
+                                 :causes [file]}))
+           (with-open [in (sexp-reader f)]
+             (loop [expr (read in false :eof)]
+               (when (not= expr :eof)
+                 (when-let [s (emit-statement expr)]
+                   (print s))
+                 (recur (read in false :eof)))))
+           (catch map? e
+             (throw+ (merge e
+                            {:causes (conj (or (:causes e) [])
+                                           file)})))
+           (catch RuntimeException e
+             (if (= (.getMessage e) "EOF while reading")
+               (throw+ {:known-error true
+                        :msg (str "EOF while reading file "
+                                  file "\n"
+                                  "Maybe you've got mismatched parentheses,"
+                                  " brackets or braces.")
+                        :causes [file]
+                        :trace e})
+               (throw+ {:known-error false
+                        :msg (.getMessage e)
+                        :causes [file]
+                        :trace e})))
+           (catch Throwable e
+             (throw+ {:known-error false
+                      :msg (.getMessage e)
+                      :causes [file]
+                      :trace e}))))))))
 
 (defn tojs
   "The top-level, stateless way to compile Chlorine source files.
@@ -1161,6 +1177,5 @@ returns them in a string. This function starts its own temporary symbol count
  and macro memory."
   [& scripts]
   (binding [*temp-sym-count* (ref 999)
-            *last-sexpr*     (ref nil)
             *macros*         (ref {})]
     (apply tojs' scripts)))
