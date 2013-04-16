@@ -422,10 +422,19 @@ and normal function calls."
   (let [mdeclrs (if (string? (first mdeclrs))
                   (rest mdeclrs)
                   mdeclrs)]
+    (when *print-pretty* (println "// defining macro" mname))
     (dosync
      (alter *macros*
             conj
-            {(name mname) (eval `(clojure.core/fn ~@mdeclrs))}))))
+            {(name mname)
+             (try+
+               (eval `(clojure.core/fn ~@mdeclrs))
+               (catch Throwable e
+                 (throw+ {:known-error true
+                          :msg (str "Error defining macro `" mname "`:\n"
+                                    (.getMessage e))
+                          :causes [`(~_ ~mname ~@mdeclrs)]
+                          :trace e})))}))))
 
 (defn borrow-macros
   "Many Clojure macros work the same in Chlorine. Use this function to reuse
