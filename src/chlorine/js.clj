@@ -1039,7 +1039,11 @@ translate the Clojure subset `exprs' to a string of javascript code."
 
 ;; Inlines raw javascript from files instead of Chlorine ones.
 (defmethod emit "include-raw!" [[_ & files]]
-  (print (str (apply raw-script files))))
+  (doseq [file files]
+    (when *print-pretty* (println "// <-- Starts raw file: " file))
+    (if-let [content (raw-script file)]
+      (print (str content)))
+    (when *print-pretty* (println "// Ends raw file: " file " -->"))))
 
 (defn raw-script [& scripts]
   (with-out-str
