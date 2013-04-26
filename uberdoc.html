@@ -3028,13 +3028,14 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>chlorine -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">chlorine</h1><h2 class="project-version">1.5.2.1</h2><br /><p>A naive Clojure to Javascript translator</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr><tr><td class="dep-name">pathetic</td><td class="dotted"><hr /></td><td class="dep-version">0.4.0</td></tr><tr><td class="dep-name">chlorine-utils</td><td class="dotted"><hr /></td><td class="dep-version">1.1.0</td></tr><tr><td class="dep-name">hiccup</td><td class="dotted"><hr /></td><td class="dep-version">1.0.2</td></tr><tr><td class="dep-name">org.clojure/tools.reader</td><td class="dotted"><hr /></td><td class="dep-version">0.7.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#chlorine.js">chlorine.js</a></li><li><a href="#chlorine.page">chlorine.page</a></li><li><a href="#chlorine.reader">chlorine.reader</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#chlorine.js" name="chlorine.js"><h1 class="project-name">chlorine.js</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</script><title>chlorine -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">chlorine</h1><h2 class="project-version">1.5.3</h2><br /><p>A naive Clojure to Javascript translator</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr><tr><td class="dep-name">pathetic</td><td class="dotted"><hr /></td><td class="dep-version">0.4.0</td></tr><tr><td class="dep-name">chlorine-utils</td><td class="dotted"><hr /></td><td class="dep-version">1.1.0</td></tr><tr><td class="dep-name">hiccup</td><td class="dotted"><hr /></td><td class="dep-version">1.0.2</td></tr><tr><td class="dep-name">slingshot</td><td class="dotted"><hr /></td><td class="dep-version">0.10.3</td></tr><tr><td class="dep-name">org.clojure/tools.reader</td><td class="dotted"><hr /></td><td class="dep-version">0.7.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#chlorine.js">chlorine.js</a></li><li><a href="#chlorine.page">chlorine.page</a></li><li><a href="#chlorine.reader">chlorine.reader</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#chlorine.js" name="chlorine.js"><h1 class="project-name">chlorine.js</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns chlorine.js
   (:require [clojure.string :as str]
             [hiccup.core]
             [clojure.walk])
   (:use [chlorine.reader]
+        [slingshot.slingshot]
         [pathetic.core :only [normalize]]
         [chlorine.util :only [url? resource-path? to-resource unzip assert-args
                               *cwd* *cpd* file-and-dir
@@ -3117,21 +3118,43 @@ function arguments etc.</p>
     ((or emitter emit) (first args))
     (doseq [arg (rest args)]
       (print delimiter)
-      ((or emitter emit) arg))))</pre></td></tr><tr><td class="docs"><p>several functions to emit Clojure data of
+      ((or emitter emit) arg))))</pre></td></tr><tr><td class="docs"><p>Checks a map's key before emitting. Valid keys are elements which can be
+  converted to strings.</p>
+
+<p>several functions to emit Clojure data of
  map, set, vector, regexp, symbol and keyword types</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Clojure maps are emitted to javascript key/value objects.
+</td><td class="codes"><pre class="brush: clojure">(defn valid-map-key?
+  [key]
+  (or (string?  key)
+      (keyword? key)
+      (number?  key)
+      (symbol?  key)
+      (and (seq? key)
+           (= 2 (count key))
+           (= 'quote  (first key))
+           (symbol? (second key)))))</pre></td></tr><tr><td class="docs"><p>Clojure maps are emitted to javascript key/value objects.
 Keys can only be strings. Keywords and quoted symbols don't really make
  sense in Chlorinejs and that's why they are emitted to plain strings.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn emit-map
   [expr]
   (with-parens [&quot;{&quot; &quot;}&quot;]
     (binding [*inline-if* true]
-      (emit-delimited &quot;,&quot;
-                      (seq expr)
-                      (fn [[key val]]
-                        (emit key)
-                        (print &quot; : &quot;)
-                        (emit val))))))</pre></td></tr><tr><td class="docs"><p>Clojure sets are emitted to javascript key/value objects whose
+      (emit-delimited
+       &quot;,&quot;
+       (seq expr)
+       (fn [[key val]]
+         (if (valid-map-key? key)
+           (emit key)
+           (throw+ {:known-error true
+                    :msg
+                    (str &quot;Error emitting this map `&quot;
+                         expr &quot;`:\n&quot;
+                         &quot;Invalid map key: `&quot; key &quot;`.\n&quot;
+                         &quot;Valid keys are elements which can be&quot;
+                         &quot; converted to strings.&quot;)
+                    :causes [expr key]}))
+         (print &quot; : &quot;)
+         (emit val))))))</pre></td></tr><tr><td class="docs"><p>Clojure sets are emitted to javascript key/value objects whose
 values are all <code>true</code>. These 'sets' objects as javascript nature will have
 distinct elements (the keys) which can be checked by <code>contains?</code> (javascript's
 <code>in</code>). Please remember, all set elements are treated strings by javascript.
@@ -3295,18 +3318,28 @@ and normal function calls.</p>
        ;;  instead of `emit-function-call` in case the caller is not simply
        ;;  a symbol.
        (coll? fun)           (apply emit-invoke-function form)
-       true                  (apply emit-function-call form)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn emit-statement [expr]
-  (binding [*inline-if* false]
-    ;; defining a macro prints out nothing
-    (if (and (coll? expr) (#{'defmacro 'include-raw! 'include! 'import!}
-                           (first expr)))
-      (emit expr)
-      (do
-        (newline-indent)
-        (emit expr)
-        (when-not (and (coll? expr) (#{'do 'let 'let*} (first expr)))
-            (print &quot;;&quot;))))))</pre></td></tr><tr><td class="docs">
+       true                  (apply emit-function-call form)))))</pre></td></tr><tr><td class="docs"><p>Emits an expression with trailing <code>;</code> and <code>newline-indent</code> if necessary.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn emit-statement
+  [expr]
+  (try+
+   (binding [*inline-if* false]
+     (if (and (coll? expr) (#{'defmacro 'include-raw! 'include! 'import!}
+                            (first expr)))
+       (emit expr)
+       (do
+         (newline-indent)
+         (emit expr)
+         (when-not (and (coll? expr) (#{'do 'let 'let*} (first expr)))
+           (print &quot;;&quot;)))))
+   (catch map? e
+     (throw+ (merge e
+                    {:causes (conj (or (:causes e) [])
+                                   expr)})))
+   (catch Throwable e
+     (throw+ {:known-error false
+              :msg (.getMessage e)
+              :causes [expr]
+              :trace e}))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn emit-statements [exprs]
   (doseq [expr exprs]
     (emit-statement expr)))</pre></td></tr><tr><td class="docs"><p>Emits statements with the manual <code>return</code> added in front of the
@@ -3317,7 +3350,7 @@ and normal function calls.</p>
     (doseq [expr (butlast exprs)]
       (emit-statement expr)))
   (when (not= 'nil (last exprs))
-    (emit-statement (last exprs))))</pre></td></tr><tr><td class="docs"><p>Lisper love macros. In fact, making a macro means writing a function
+    (emit-statement (last exprs))))</pre></td></tr><tr><td class="docs"><p>Lispers love macros. In fact, making a macro means writing a function
 that returns some code. Chlorine macros are nearly Clojure ones:
 you can write the function (by <code>defmacro</code>) using all Clojure expressions,
 even ones from external Clojure libraries (if you've already loaded them).
@@ -3329,33 +3362,59 @@ generates code).</p>
 </td><td class="codes"><pre class="brush: clojure">(defn macro?
   [n] (and (symbol? n) (contains? @*macros* (name n))))</pre></td></tr><tr><td class="docs"><p>Gets the macro function by its name in order to generate code.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn get-macro
-  [n] (and (symbol? n) (get @*macros* (name n))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn undef-macro [n]
+  [n] (and (symbol? n) (get @*macros* (name n))))</pre></td></tr><tr><td class="docs"><p>Removes a macro from known macro list.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn undef-macro
+  [n]
   (when (macro? n)
     (when *print-pretty* (println &quot;// undefining macro&quot; n))
     (dosync (alter *macros* dissoc (name n)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;defmacro&quot; [[_ mname &amp; mdeclrs]]
-  (let [mdeclrs (if (string? (first mdeclrs))
-                  (rest mdeclrs)
-                  mdeclrs)]
-    (dosync
-     (alter *macros*
-            conj
-            {(name mname) (eval `(clojure.core/fn ~@mdeclrs))})))
+  (try+
+   (let [mdeclrs (if (string? (first mdeclrs))
+                   (rest mdeclrs)
+                   mdeclrs)]
+     (when *print-pretty* (println &quot;// defining macro&quot; mname))
+     (dosync
+      (alter *macros*
+             conj
+             {(name mname)
+              (eval `(clojure.core/fn ~@mdeclrs))})))
+   (catch Throwable e
+     (throw+ {:known-error true
+              :msg (str &quot;Error defining macro `&quot; mname &quot;`:\n&quot;
+                        (.getMessage e))
+              :causes [`(~_ ~mname ~@mdeclrs)]
+              :trace e})))
+  ;; returns `nil` because output are consumed by `with-out-str`
   nil)</pre></td></tr><tr><td class="docs"><p>Many Clojure macros work the same in Chlorine. Use this function to reuse
 them instead of rewriting.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn borrow-macros
   [&amp; syms]
   (doseq [sym syms]
-    (dosync (alter *macros* conj
-                   {(name sym)
-                    (fn [&amp; args#]
-                      (apply (resolve sym) (concat [nil nil] args#)))}))))</pre></td></tr><tr><td class="docs"><p>Gets and executes macro function, returns the Chlorine code.</p>
+    (dosync
+     (alter *macros* conj
+            {(name sym)
+             (try+
+              (fn [&amp; args#]
+                (apply (resolve sym) (concat [nil nil] args#)))
+              (catch Throwable e
+                (throw+ {:known-error true
+                         :msg (str &quot;Error borrowing macro `&quot; sym &quot;`:\n&quot;
+                                   (.getMessage e))
+                         :causes [`(borrow-macros ~sym)]
+                         :trace e})))}))))</pre></td></tr><tr><td class="docs"><p>Gets and executes macro function, returns the Chlorine code.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn expand-macro-1
   [form]
   (let [[mac-name &amp; args] form]
     (if-let [mac (get-macro mac-name)]
-      (apply mac args)
+      (try+
+       (apply mac args)
+       (catch Throwable e
+         (throw+ {:known-error true
+                  :msg   (str &quot;Error expanding macro `&quot; form &quot;`:\n&quot;
+                              (.getMessage e))
+                  :causes [form]
+                  :trace e})))
       form)))</pre></td></tr><tr><td class="docs"><p>Repeatedly calls expand-macro-1 on form until it no longer
   represents a macro form, then returns it.  Note neither
   expand-macro-1 nor expand-macro expand macros in subforms.</p>
@@ -3420,26 +3479,34 @@ on maps and supports default value when not found.</p>
           (condp = vname
             '&amp;  (cond
                   seen-rest?
-                    (throw
-                     (Exception.
-                      &quot;Unsupported binding form, only :as can follow &amp;&quot;))
+                    (throw+
+                     {:known-error true
+                      :msg (str &quot;Unsupported binding form `&quot; vvec &quot;`:\n&quot;
+                                &quot;only `:as` can follow `&amp;`&quot;)
+                      :causes [vvec]})
                   (not (symbol? vval))
-                    (throw
-                     (Exception.
-                      (str &quot;Unsupported binding form, &amp; must be&quot;
-                           &quot; followed by exactly one symbol&quot;)))
+                    (throw+
+                     {:known-error true
+                      :msg
+                      (str  &quot;Unsupported binding form `&quot; vvec &quot;`:\n&quot;
+                            &quot;`&amp;` must be followed by exactly one symbol&quot;)
+                      :causes [vvec]})
                   :else
                     (do (emit-binding vval `(.slice ~temp ~i))
                         (recur (nnext vseq) (inc i) true)))
             :as (cond
                   (not= (count (nnext vseq)) 0)
-                    (throw
-                     (Exception. (str &quot;Unsupported binding form, nothing&quot;
-                                      &quot; must follow after :as &lt;binding&gt;&quot;)))
+                    (throw+
+                     {:known-error true
+                      :msg (str &quot;Unsupported binding form `&quot; vvec &quot;`:\n&quot;
+                                &quot;nothing may follow after `:as &lt;binding&gt;`&quot;)
+                      :causes [vvec]})
                   (not (symbol? vval))
-                    (throw
-                     (Exception. (str &quot;Unsupported binding form, :as must&quot;
-                                      &quot; be followed by a symbol&quot;)))
+                    (throw+
+                     {:known-error true
+                      :msg (str &quot;Unsupported binding form, `&quot; vvec &quot;`:\n&quot;
+                                &quot;`:as` must be followed by a symbol&quot;)
+                      :causes [vvec]})
                   :else
                     (emit-binding vval temp))
             (do (emit-binding vname `(get* ~temp ~i))
@@ -3448,23 +3515,25 @@ on maps and supports default value when not found.</p>
   (let [temp     (or (:as vmap) (tempsym))
         defaults (get vmap :or)
         keysmap  (reduce #(assoc %1 %2 (keyword %2))
-                  {}
-                  (mapcat vmap [:keys :strs :syms]))
+                         {}
+                         (mapcat vmap [:keys :strs :syms]))
         vmap     (merge (dissoc vmap :as :or :keys :strs :syms) keysmap)]
     (print (str temp &quot; = &quot;))
     (emit val)
     (doseq [[vname vkey] vmap]
       (print &quot;, &quot;)
       (cond
-        (not (and (binding-form? vname)
-                  (or (some #(% vkey) #{keyword? number? binding-form?}))))
-          (throw
-           (Exception. (str &quot;Unsupported binding form, binding symbols &quot;
-                            &quot;must be followed by keywords or numbers&quot;)))
-        :else
-          (if-let [[_ default] (find defaults vname)]
-            (emit-binding vname `(get ~temp ~vkey ~default))
-            (emit-binding vname `(get ~temp ~vkey)))))))</pre></td></tr><tr><td class="docs">
+       (not (and (binding-form? vname)
+                 (or (some #(% vkey) #{keyword? number? binding-form?}))))
+       (throw+
+        {:known-error true
+         :msg (str &quot;Unsupported binding form `&quot; vmap &quot;`:\n&quot;
+                   &quot;binding symbols must be followed by keywords or numbers&quot;)
+         :causes [vmap]})
+       :else
+       (if-let [[_ default] (find defaults vname)]
+         (emit-binding vname `(get ~temp ~vkey ~default))
+         (emit-binding vname `(get ~temp ~vkey)))))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- emit-var-bindings [bindings]
   (binding [*return-expr* false]
     (emit-delimited
@@ -3679,12 +3748,7 @@ inside a function in most cases.</p>
   (print &quot;var &quot;)
   (binding [*return-expr* false]
     (with-block (emit-var-bindings bindings))
-    (print &quot;;&quot;)))</pre></td></tr><tr><td class="docs"><p>Transforms <code>get</code> to <code>get*</code> to access object properties</p>
-</td><td class="codes"><pre class="brush: clojure">(defn transform-get
-  [k]
-  (if (and (seq? k) (= 'get (first k)))
-    (cons 'get* (rest k))
-    k))</pre></td></tr><tr><td class="docs">
+    (print &quot;;&quot;)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;new&quot; [[_ class &amp; args]]
   (with-return-expr []
     (binding [*inline-if* true]
@@ -3695,7 +3759,7 @@ inside a function in most cases.</p>
   (with-return-expr []
     (binding [*inline-if* true]
       (print &quot;delete &quot;)
-      (emit (transform-get item)))))</pre></td></tr><tr><td class="docs">
+      (emit item))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;return&quot; [[_ value]]
   (print &quot;return &quot;)
   (emit value))</pre></td></tr><tr><td class="docs"><p>Low-level form to directly access object properties/array indexes.
@@ -3727,13 +3791,12 @@ instead</p>
             *in-fn-toplevel* false
             *unique-return-expr* false
             *inline-if* true]
-    (let [apairs (partition 2 apairs)
-          [k v] (first apairs)]
-      (emit-delimited &quot; = &quot; [(transform-get k) v])
-      (doseq [[k v] (rest apairs)]
+    (let [apairs (partition 2 apairs)]
+      (emit-delimited &quot; = &quot; (first apairs))
+      (doseq [apair (rest apairs)]
         (print &quot;;&quot;)
         (newline-indent)
-        (emit-delimited &quot; = &quot; [(transform-get k) v])))))</pre></td></tr><tr><td class="docs">
+        (emit-delimited &quot; = &quot; apair)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;try&quot; [[_ expr &amp; clauses]]
   (print &quot;try {&quot;)
   (with-indent []
@@ -3782,8 +3845,7 @@ instead</p>
             (newline-indent)
             (emit-for-block))
           (newline-indent))
-        (print &quot;}).call(this)&quot;))
-      )))</pre></td></tr><tr><td class="docs">
+        (print &quot;}).call(this)&quot;)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;recur&quot; [[_ &amp; args]]
   (binding [*return-expr* false]
     (let [tmp (tempsym)]
@@ -3863,8 +3925,7 @@ instead</p>
        (and *quoted* (coll? expr)) (emit-vector expr)
        (coll? expr) (emit-function-form expr)
        (nil? expr) (print &quot;void(0)&quot;)
-       true (print expr)
-       ))))</pre></td></tr><tr><td class="docs">
+       true (print expr)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn emit-str [expr]
   (binding [*return-expr* false
             *inline-if* true]
@@ -3892,19 +3953,29 @@ translate the Clojure subset `exprs' to a string of javascript code.</p>
   (let [body# `(let ~bindings ~quoted-expr)]
     `(with-out-str
        (js-emit ~body#))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *last-sexpr* nil)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(declare raw-script)</pre></td></tr><tr><td class="docs"><p>Chlorine doesn't support an official way to modularize code like Clojure
 with namespaces. Instead, Chlorine provides a basic syntax to load code
 from other files into the current file as if they are one. This can be
 done with <code>include!</code></p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;include!&quot; [[_ &amp; files]]
-  (print (str (apply tojs' files))))</pre></td></tr><tr><td class="docs"><p>Sometimes you only want to load macros from an outside file and print out
-nothing. You <code>import!</code> then</p>
+  ;(print (str (apply tojs' files)))
+  (doseq [file files]
+    (when *print-pretty* (println &quot;// &lt;-- Starts included file: &quot; file))
+    (if-let [content (tojs' file)]
+      (print (str content)))
+    (when *print-pretty* (println &quot;// Ends included file: &quot; file &quot; --&gt;&quot;))))</pre></td></tr><tr><td class="docs"><p>Sometimes you only want to load macros from an outside file and print out
+nothing. Use <code>import!</code> then</p>
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;import!&quot; [[_ &amp; files]]
-  (apply tojs' files))</pre></td></tr><tr><td class="docs"><p>Inlines raw javascript from files instead of Chlorine ones.</p>
+  (doseq [file files]
+    (when *print-pretty* (println &quot;// Imports file: &quot; file))
+    (tojs' file)))</pre></td></tr><tr><td class="docs"><p>Inlines raw javascript from files instead of Chlorine ones.</p>
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;include-raw!&quot; [[_ &amp; files]]
-  (print (str (apply raw-script files))))</pre></td></tr><tr><td class="docs">
+  (doseq [file files]
+    (when *print-pretty* (println &quot;// &lt;-- Starts raw file: &quot; file))
+    (if-let [content (raw-script file)]
+      (print (str content)))
+    (when *print-pretty* (println &quot;// Ends raw file: &quot; file &quot; --&gt;&quot;))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn raw-script [&amp; scripts]
   (with-out-str
     (doseq [script scripts]
@@ -3921,6 +3992,7 @@ varies depending on states such as macros, temporary symbol count etc.</p>
   [&amp; scripts]
   (with-out-str
     (doseq [script scripts]
+      ;; converts to absolute paths:
       (let [[file dir] (file-and-dir script)
             f (cond
                (resource-path? file)
@@ -3929,29 +4001,45 @@ varies depending on states such as macros, temporary symbol count etc.</p>
                    (.isFile (clojure.java.io/file file)))
                file)]
         (binding [*cwd* dir]
-          (try
-            (if (nil? f) (throw (Exception. &quot;File not found!&quot;)))
-            (with-open [in (sexp-reader f)]
-              (loop [expr (read in false :eof)]
-                (when (not= expr :eof)
-                  (if-let [s (emit-statement expr)]
-                    (print s)
-                    (dosync
-                     (ref-set *last-sexpr* expr)))
-                  (recur (read in false :eof)))))
-            (catch Throwable e
-              (throw (new Throwable
-                          (str
-                           &quot;Error translating script &quot; f
-                           &quot; last s-expr &quot; @*last-sexpr*)
-                          e)))))))))</pre></td></tr><tr><td class="docs"><p>The top-level, stateless way to compile Chlorine source files.
+          (try+
+           (if (nil? f) (throw+ {:known-error true
+                                 :msg
+                                 &quot;File not found `&quot; file &quot;`&quot;
+                                 :causes [file]}))
+           (with-open [in (sexp-reader f)]
+             (loop [expr (read in false :eof)]
+               (when (not= expr :eof)
+                 (when-let [s (emit-statement expr)]
+                   (print s))
+                 (recur (read in false :eof)))))
+           (catch map? e
+             (throw+ (merge e
+                            {:causes (conj (or (:causes e) [])
+                                           file)})))
+           (catch RuntimeException e
+             (if (= (.getMessage e) &quot;EOF while reading&quot;)
+               (throw+ {:known-error true
+                        :msg (str &quot;EOF while reading file &quot;
+                                  file &quot;\n&quot;
+                                  &quot;Maybe you've got mismatched parentheses,&quot;
+                                  &quot; brackets or braces.&quot;)
+                        :causes [file]
+                        :trace e})
+               (throw+ {:known-error false
+                        :msg (.getMessage e)
+                        :causes [file]
+                        :trace e})))
+           (catch Throwable e
+             (throw+ {:known-error false
+                      :msg (.getMessage e)
+                      :causes [file]
+                      :trace e}))))))))</pre></td></tr><tr><td class="docs"><p>The top-level, stateless way to compile Chlorine source files.
 Loads and compiles a list of cl2 scripts into javascript, and
 returns them in a string. This function starts its own temporary symbol count
  and macro memory.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn tojs
   [&amp; scripts]
   (binding [*temp-sym-count* (ref 999)
-            *last-sexpr*     (ref nil)
             *macros*         (ref {})]
     (apply tojs' scripts)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#chlorine.page" name="chlorine.page"><h1 class="project-name">chlorine.page</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns chlorine.page
