@@ -673,18 +673,20 @@ them instead of rewriting."
 ;; - they're special forms, not functions and receive unquoted Chlorine forms
 ;; instead of quoted ones like in Clojure.
 ;; - they print out code as strings because javascript is not a Lisp.
+;; - namespaces don't make sense in ChlorineJS so they're automatically removed.
+
+(defn remove-namespaces
+  "Removes all namespaces in forms using clojure.walk/postwalk."
+  [forms]
+  (clojure.walk/postwalk
+   (fn [x] (if (symbol? x) (symbol (name x)) x))
+   forms))
 
 (defmethod emit "macroexpand-1" [[_ form]]
-  (emit (clojure.string/replace (pr-str (expand-macro-1 form))
-                                "clojure.core/" "")))
-
-;; These functions use pr-str to convert code to string which produces
-;; some "clojure.core/" in the result. So we remove that string before
-;; send it to users.
+  (emit  (pr-str (remove-namespaces (expand-macro-1 form)))))
 
 (defmethod emit "macroexpand" [[_ form]]
-  (emit (clojure.string/replace (pr-str (expand-macro form))
-                                "clojure.core/" "")))
+  (emit (pr-str (remove-namespaces (expand-macro form)))))
 
 ;; Low-level function form. Please use `fn` and `defn` macros instead
 (defmethod emit "fn*" [[_ & fdecl]]

@@ -476,7 +476,10 @@
   (is (= (js (macroexpand-1 (.. foo (bar) (buzz))))
          "\"(.. (. foo (bar)) (buzz))\""))
   (is (= (js (macroexpand (.. foo (bar) (buzz))))
-         "\"(. (. foo (bar)) (buzz))\"")))
+         "\"(. (. foo (bar)) (buzz))\""))
+  ;; ensures namespaces are removed
+  (is (= (js (macroexpand (some-namespace/str foo (bar) (buzz))))
+         "\"(str foo (bar) (buzz))\"")))
 
 (deftest dofor-test
   (is (= (js
