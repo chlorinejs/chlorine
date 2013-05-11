@@ -3157,18 +3157,12 @@ Keys can only be strings. Keywords and quoted symbols don't really make
          (emit val))))))</pre></td></tr><tr><td class="docs"><p>Clojure sets are emitted to javascript key/value objects whose
 values are all <code>true</code>. These 'sets' objects as javascript nature will have
 distinct elements (the keys) which can be checked by <code>contains?</code> (javascript's
-<code>in</code>). Please remember, all set elements are treated strings by javascript.
+<code>in</code>). Please remember, all set elements are coerced to strings by javascript.
 That means, both <code>(contains? 5 {:a 1 "5" 2})</code> and
  `(contains? "5" {:b 3 5 4} will return true.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn emit-set
   [expr]
-  (with-parens [&quot;{&quot; &quot;}&quot;]
-    (binding [*inline-if* true]
-      (emit-delimited &quot;,&quot;
-                      (seq expr)
-                      (fn [key]
-                        (emit key)
-                        (print &quot; : true&quot;))))))</pre></td></tr><tr><td class="docs"><p>Clojure vectors and quoted lists are emitted as javascript arrays.</p>
+  (emit `(hash-set ~@(seq expr))))</pre></td></tr><tr><td class="docs"><p>Clojure vectors and quoted lists are emitted as javascript arrays.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn emit-vector
   [expr]
   (with-parens [&quot;[&quot; &quot;]&quot;]
@@ -3592,17 +3586,18 @@ on maps and supports default value when not found.</p>
 macroexpand-1 and macroexpand work the like in Clojure except:
 - they're special forms, not functions and receive unquoted Chlorine forms
 instead of quoted ones like in Clojure.
-- they print out code as strings because javascript is not a Lisp.</p>
-</td><td class="codes"></td></tr><tr><td class="docs">
+- they print out code as strings because javascript is not a Lisp.
+- namespaces don't make sense in ChlorineJS so they're automatically removed.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Removes all namespaces in forms using clojure.walk/postwalk.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn remove-namespaces
+  [forms]
+  (clojure.walk/postwalk
+   (fn [x] (if (symbol? x) (symbol (name x)) x))
+   forms))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;macroexpand-1&quot; [[_ form]]
-  (emit (clojure.string/replace (pr-str (expand-macro-1 form))
-                                &quot;clojure.core/&quot; &quot;&quot;)))</pre></td></tr><tr><td class="docs"><p>These functions use pr-str to convert code to string which produces
-some "clojure.core/" in the result. So we remove that string before
-send it to users.</p>
-</td><td class="codes"></td></tr><tr><td class="docs">
+  (emit  (pr-str (remove-namespaces (expand-macro-1 form)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;macroexpand&quot; [[_ form]]
-  (emit (clojure.string/replace (pr-str (expand-macro form))
-                                &quot;clojure.core/&quot; &quot;&quot;)))</pre></td></tr><tr><td class="docs"><p>Low-level function form. Please use <code>fn</code> and <code>defn</code> macros instead</p>
+  (emit (pr-str (remove-namespaces (expand-macro form)))))</pre></td></tr><tr><td class="docs"><p>Low-level function form. Please use <code>fn</code> and <code>defn</code> macros instead</p>
 </td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;fn*&quot; [[_ &amp; fdecl]]
   (with-return-expr []
     (with-block (emit-function fdecl))))</pre></td></tr><tr><td class="docs"><p>Javascript's <code>if</code> expressions don't return values directly [1]. That's
