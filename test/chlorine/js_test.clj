@@ -36,17 +36,13 @@
   (is (= (with-out-str (emit-map {:a 1 "b" {'c 2}}))
          "{\"b\" : {c : 2},'a' : 1}")))
 
-(deftest emit-set-test
-  (is (= (with-out-str (emit-set #{:foo "bar" 'bazz 5}))
-         "{5 : true,'foo' : true,\"bar\" : true,bazz : true}")))
-
 (deftest literals
   (is (= (js *print-pretty*) "$STAR$print_pretty$STAR$"))
   (is (= (js number?) "number$QUEST$"))
   (is (= (js foo-bar-baz) "foo_bar_baz"))
   (is (= (js inc!) "inc$EXCL$"))
   (is (= (js {:foo 1 :bar 2 :baz 3}) "{'foo' : 1,'bar' : 2,'baz' : 3}"))
-  (is (= (js #{:foo :bar :baz}) "{'foo' : true,'bar' : true,'baz' : true}"))
+  (is (= (js #{:foo :bar :baz}) "hash_set('foo', 'bar', 'baz')"))
   (is (= (js [:foo :bar :baz]) "['foo','bar','baz']"))
   (is (= (js \newline) "'\n'"))
   (is (= (js \a) "'a'")))
