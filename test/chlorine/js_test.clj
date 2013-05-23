@@ -505,3 +505,15 @@
          "/foo/i"))
   (is (= (js #"^([a-z]*)([0-9]*)")
          "/^([a-z]*)([0-9]*)/")))
+
+(deftest do-while-test
+  (is (= (js
+           (do-while (< x 10)
+                     (set! x (+* x 1))))
+         "do { x = (x + 1); } while ((x < 10))"
+         ))
+  (is (= (js
+           (do-while (and (< x 10) (> x 5))
+                     (set! x (+* x 1))))
+         "do { x = (x + 1); } while (((x < 10) && (x > 5)))"
+         )))
