@@ -190,6 +190,11 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
    ;; name in Clojure and Chlorine core library.
    ;; `int` (the function) is emitted as `int*` instead
    #"^int$" "int*"
+   ;; Chlorine uses a Clojure-like syntax of `(require ...)`
+   ;; to load nodejs/browserify. It's implemented as macro which
+   ;; expands to the lower level `require*`. `require*` in turn
+   ;; emitted as javascript `require()`
+   #"^require\*$" "require"
    "$"  "$USD$"
    "->" "$ARROW$"
    "=>" "$BARROW$"
