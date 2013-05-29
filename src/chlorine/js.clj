@@ -354,7 +354,7 @@ and normal function calls."
   [expr]
   (try+
    (binding [*inline-if* false]
-     (if (and (coll? expr) (#{'defmacro 'include-raw! 'include! 'import!}
+     (if (and (coll? expr) (#{'defmacro 'load-js 'load-file 'load-file-macros}
                             (first expr)))
        (emit expr)
        (do
@@ -1080,30 +1080,30 @@ translate the Clojure subset `exprs' to a string of javascript code."
 ;; Chlorine doesn't support an official way to modularize code like Clojure
 ;; with namespaces. Instead, Chlorine provides a basic syntax to load code
 ;; from other files into the current file as if they are one. This can be
-;; done with `include!`
+;; done with `load-file`
 
-(defmethod emit "include!" [[_ & files]]
+(defmethod emit "load-file" [[_ & files]]
   ;(print (str (apply tojs' files)))
   (doseq [file files]
-    (when *print-pretty* (println "// <-- Starts included file: " file))
+    (when *print-pretty* (println "// <-- Starts loading file: " file))
     (if-let [content (tojs' file)]
       (print (str content)))
-    (when *print-pretty* (println "// Ends included file: " file " -->"))))
+    (when *print-pretty* (println "// Ends loading file: " file " -->"))))
 
 ;; Sometimes you only want to load macros from an outside file and print out
-;; nothing. Use `import!` then
-(defmethod emit "import!" [[_ & files]]
+;; nothing. Use `load-file-macros` then
+(defmethod emit "load-file-macros" [[_ & files]]
   (doseq [file files]
-    (when *print-pretty* (println "// Imports file: " file))
+    (when *print-pretty* (println "// Loads macros from file: " file))
     (tojs' file)))
 
 ;; Inlines raw javascript from files instead of Chlorine ones.
-(defmethod emit "include-raw!" [[_ & files]]
+(defmethod emit "load-js" [[_ & files]]
   (doseq [file files]
-    (when *print-pretty* (println "// <-- Starts raw file: " file))
+    (when *print-pretty* (println "// <-- Starts Javascipt file: " file))
     (if-let [content (raw-script file)]
       (print (str content)))
-    (when *print-pretty* (println "// Ends raw file: " file " -->"))))
+    (when *print-pretty* (println "// Ends Javascript file: " file " -->"))))
 
 (defn raw-script [& scripts]
   (with-out-str
