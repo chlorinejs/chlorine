@@ -186,6 +186,9 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 (def ^:dynamic *symbol-map*
   (array-map
    #"^boolean$" "boolean*"
+   ;; `int` is a reserved symbol name in js. It's also a function
+   ;; name in Clojure and Chlorine core library.
+   ;; `int` (the function) is emitted as `int*` instead
    #"^int$" "int*"
    "$"  "$USD$"
    "->" "$ARROW$"
