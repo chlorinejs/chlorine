@@ -3028,7 +3028,7 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>chlorine -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">chlorine</h1><h2 class="project-version">1.5.3</h2><br /><p>A naive Clojure to Javascript translator</p>
+</script><title>chlorine -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">chlorine</h1><h2 class="project-version">1.5.3.1</h2><br /><p>A naive Clojure to Javascript translator</p>
 </div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr><tr><td class="dep-name">pathetic</td><td class="dotted"><hr /></td><td class="dep-version">0.4.0</td></tr><tr><td class="dep-name">chlorine-utils</td><td class="dotted"><hr /></td><td class="dep-version">1.1.0</td></tr><tr><td class="dep-name">hiccup</td><td class="dotted"><hr /></td><td class="dep-version">1.0.2</td></tr><tr><td class="dep-name">slingshot</td><td class="dotted"><hr /></td><td class="dep-version">0.10.3</td></tr><tr><td class="dep-name">org.clojure/tools.reader</td><td class="dotted"><hr /></td><td class="dep-version">0.7.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#chlorine.js">chlorine.js</a></li><li><a href="#chlorine.page">chlorine.page</a></li><li><a href="#chlorine.reader">chlorine.reader</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#chlorine.js" name="chlorine.js"><h1 class="project-name">chlorine.js</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns chlorine.js
   (:require [clojure.string :as str]
@@ -3180,7 +3180,15 @@ characters to javascript-friendly ones.</p>
 </td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *symbol-map*
   (array-map
    #&quot;^boolean$&quot; &quot;boolean*&quot;
+   ;; `int` is a reserved symbol name in js. It's also a function
+   ;; name in Clojure and Chlorine core library.
+   ;; `int` (the function) is emitted as `int*` instead
    #&quot;^int$&quot; &quot;int*&quot;
+   ;; Chlorine uses a Clojure-like syntax of `(require ...)`
+   ;; to load nodejs/browserify. It's implemented as macro which
+   ;; expands to the lower level `require*`. `require*` in turn
+   ;; emitted as javascript `require()`
+   #&quot;^require\*$&quot; &quot;require&quot;
    &quot;$&quot;  &quot;$USD$&quot;
    &quot;-&gt;&quot; &quot;$ARROW$&quot;
    &quot;=&gt;&quot; &quot;$BARROW$&quot;
@@ -3317,7 +3325,7 @@ and normal function calls.</p>
   [expr]
   (try+
    (binding [*inline-if* false]
-     (if (and (coll? expr) (#{'defmacro 'include-raw! 'include! 'import!}
+     (if (and (coll? expr) (#{'defmacro 'load-js 'load-file 'load-file-macros}
                             (first expr)))
        (emit expr)
        (do
@@ -3951,26 +3959,26 @@ translate the Clojure subset `exprs' to a string of javascript code.</p>
 </td><td class="codes"><pre class="brush: clojure">(declare raw-script)</pre></td></tr><tr><td class="docs"><p>Chlorine doesn't support an official way to modularize code like Clojure
 with namespaces. Instead, Chlorine provides a basic syntax to load code
 from other files into the current file as if they are one. This can be
-done with <code>include!</code></p>
+done with <code>load-file</code></p>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;include!&quot; [[_ &amp; files]]
+</td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;load-file&quot; [[_ &amp; files]]
   ;(print (str (apply tojs' files)))
   (doseq [file files]
-    (when *print-pretty* (println &quot;// &lt;-- Starts included file: &quot; file))
+    (when *print-pretty* (println &quot;// &lt;-- Starts loading file: &quot; file))
     (if-let [content (tojs' file)]
       (print (str content)))
-    (when *print-pretty* (println &quot;// Ends included file: &quot; file &quot; --&gt;&quot;))))</pre></td></tr><tr><td class="docs"><p>Sometimes you only want to load macros from an outside file and print out
-nothing. Use <code>import!</code> then</p>
-</td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;import!&quot; [[_ &amp; files]]
+    (when *print-pretty* (println &quot;// Ends loading file: &quot; file &quot; --&gt;&quot;))))</pre></td></tr><tr><td class="docs"><p>Sometimes you only want to load macros from an outside file and print out
+nothing. Use <code>load-file-macros</code> then</p>
+</td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;load-file-macros&quot; [[_ &amp; files]]
   (doseq [file files]
-    (when *print-pretty* (println &quot;// Imports file: &quot; file))
+    (when *print-pretty* (println &quot;// Loads macros from file: &quot; file))
     (tojs' file)))</pre></td></tr><tr><td class="docs"><p>Inlines raw javascript from files instead of Chlorine ones.</p>
-</td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;include-raw!&quot; [[_ &amp; files]]
+</td><td class="codes"><pre class="brush: clojure">(defmethod emit &quot;load-js&quot; [[_ &amp; files]]
   (doseq [file files]
-    (when *print-pretty* (println &quot;// &lt;-- Starts raw file: &quot; file))
+    (when *print-pretty* (println &quot;// &lt;-- Starts Javascipt file: &quot; file))
     (if-let [content (raw-script file)]
       (print (str content)))
-    (when *print-pretty* (println &quot;// Ends raw file: &quot; file &quot; --&gt;&quot;))))</pre></td></tr><tr><td class="docs">
+    (when *print-pretty* (println &quot;// Ends Javascript file: &quot; file &quot; --&gt;&quot;))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn raw-script [&amp; scripts]
   (with-out-str
     (doseq [script scripts]
