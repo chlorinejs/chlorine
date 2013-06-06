@@ -8,8 +8,10 @@ Chlorine (formerly Clojurejs) is a naive implementation of a Clojure subset lang
 * Macros with ``defmacro``
 * Implicit ``return`` from all forms
 * ``loop/recur`` translates to Javascript ``for`` loops
+* ``case`` translates to Javascript ``switch/case``
 * Translates Clojure vectors, strings, keywords, symbols and maps to Javascript equivalents
-* File-based dependencies through ``import!`` and ``include!``
+* File-based dependencies through ``load-file`` and ``load-file-macros``
+* Clojure destructuring forms in functions and `let`
 
 Chlorine is available under the Eclipse Public License - v 1.0.
 
