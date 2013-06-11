@@ -461,6 +461,8 @@
 
 (borrow-macros '..)
 (deftest expand-macro-test
+  (is (= (expand-macro-1 'foo)
+         'foo))
   (is (= (expand-macro-1 '(.. foo bar))
          '(. foo bar)))
   (is (= (expand-macro '(.. foo (bar) (buzz)))
