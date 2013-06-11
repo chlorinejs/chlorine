@@ -461,27 +461,29 @@ them instead of rewriting."
 (defn expand-macro-1
   "Gets and executes macro function, returns the Chlorine code."
   [form]
-  (let [[mac-name & args] form]
-    (if-let [mac (get-macro mac-name)]
-      (try+
-       (apply mac args)
-       (catch Throwable e
-         (throw+ {:known-error true
-                  :msg   (str "Error expanding macro `" form "`:\n"
-                              (.getMessage e))
-                  :causes [form]
-                  :trace e})))
-      form)))
+  (if (seq? form)
+    (let [[mac-name & args] form]
+      (if-let [mac (get-macro mac-name)]
+        (try+
+         (apply mac args)
+         (catch Throwable e
+           (throw+ {:known-error true
+                    :msg   (str "Error expanding macro `" form "`:\n"
+                                (.getMessage e))
+                    :causes [form]
+                    :trace e})))
+        form))
+    form))
 
 (defn expand-macro
   "Repeatedly calls expand-macro-1 on form until it no longer
   represents a macro form, then returns it.  Note neither
   expand-macro-1 nor expand-macro expand macros in subforms."
   [form]
-    (let [ex (expand-macro-1 form)]
-      (if (identical? ex form)
-        form
-        (expand-macro-1 ex))))
+  (let [ex (expand-macro-1 form)]
+    (if (identical? ex form)
+      form
+      (expand-macro ex))))
 
 (defn emit-macro-expansion
   "Gets and executes macro function, emits the result as Chlorine code."
