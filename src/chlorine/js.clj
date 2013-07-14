@@ -681,6 +681,11 @@ them instead of rewriting."
   (binding [*inline-if* true]
     (emit value)))
 
+(defmethod emit "alias" [[_ sym other]]
+  (when *print-pretty* (println "// alias" sym "as" other))
+  (dosync
+   (alter *aliases* assoc sym other)))
+
 ;; Macro expansions are useful in REPL.
 ;; macroexpand-1 and macroexpand work the like in Clojure except:
 ;; - they're special forms, not functions and receive unquoted Chlorine forms
