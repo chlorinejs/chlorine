@@ -4,10 +4,11 @@
             [clojure.walk])
   (:use [chlorine.reader]
         [slingshot.slingshot]
-        [pathetic.core :only [normalize]]
-        [chlorine.util :only [url? resource-path? to-resource unzip assert-args
-                              *cwd* *cpd* file-and-dir
-                              re? replace-map]]))
+        [pathetic.core :only [normalize url-normalize]]
+        [chlorine.util
+         :only [url? resource-path? to-resource unzip assert-args
+                *cwd* *paths* get-dir find-in-paths
+                re? replace-map]]))
 
 (def ^:dynamic *print-pretty* false)
 
@@ -178,6 +179,23 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 ;; Symbols are Chlorine's amazing pieces. We have a wide range of valid
 ;; characters for Chlorine just like Clojure. You can use Lisp-style naming
 ;; conventions such as "?" endings for predicate functions.
+
+;; You can tell ChlorineJS to emit a symbol as if it's an other one by
+;; using aliases
+(def ^:dynamic *aliases*
+  (ref '{;; `int` and `boolean` are reserved symbols in js.
+         ;; They're also function names in Clojure and Chlorine core
+         ;; library.
+         int int*
+         boolean boolean*
+
+         ;; Chlorine uses a Clojure-like syntax of `(require ...)`
+         ;; to load nodejs/browserify. It's implemented as macro which
+         ;; expands to the lower level `require*`. `require*` in turn
+         ;; emitted as javascript `require()`
+         require* require
+         }))
+
 ;; Because javascript doesn't allow such characters, the function
 ;; `chlorine.util/replace-map` will be used to replace all Clojure-only
 ;; characters to javascript-friendly ones.
@@ -185,16 +203,6 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 ;; The mapping used to do the replacements
 (def ^:dynamic *symbol-map*
   (array-map
-   #"^boolean$" "boolean*"
-   ;; `int` is a reserved symbol name in js. It's also a function
-   ;; name in Clojure and Chlorine core library.
-   ;; `int` (the function) is emitted as `int*` instead
-   #"^int$" "int*"
-   ;; Chlorine uses a Clojure-like syntax of `(require ...)`
-   ;; to load nodejs/browserify. It's implemented as macro which
-   ;; expands to the lower level `require*`. `require*` in turn
-   ;; emitted as javascript `require()`
-   #"^require\*$" "require"
    "$"  "$USD$"
    "->" "$ARROW$"
    "=>" "$BARROW$"
@@ -231,7 +239,9 @@ javascript if the symbol isn't marked as reserved ones."
        (str "'" (name expr) "'")
        (if (reserved-symbol? *reserved-symbols* sym)
          sym
-         (replace-map sym *symbol-map*))))))
+         (-> (or (get @*aliases* expr)
+                 sym)
+             (replace-map *symbol-map*)))))))
 
 (defn emit-keyword
   "Emits Clojure keywords. Uses emit-symbol as backend."
@@ -428,9 +438,9 @@ and normal function calls."
      (when *print-pretty* (println "// defining macro" mname))
      (dosync
       (alter *macros*
-             conj
-             {(name mname)
-              (eval `(clojure.core/fn ~@mdeclrs))})))
+             assoc
+             (name mname)
+             (eval `(clojure.core/fn ~@mdeclrs)))))
    (catch Throwable e
      (throw+ {:known-error true
               :msg (str "Error defining macro `" mname "`:\n"
@@ -671,6 +681,11 @@ them instead of rewriting."
   (print " = ")
   (binding [*inline-if* true]
     (emit value)))
+
+(defmethod emit "alias" [[_ sym other]]
+  (when *print-pretty* (println "// alias" sym "as" other))
+  (dosync
+   (alter *aliases* assoc sym other)))
 
 ;; Macro expansions are useful in REPL.
 ;; macroexpand-1 and macroexpand work the like in Clojure except:
@@ -1117,66 +1132,60 @@ translate the Clojure subset `exprs' to a string of javascript code."
 
 (defn raw-script [& scripts]
   (with-out-str
-    (doseq [script scripts]
-      (let [[file dir] (file-and-dir script)
-            f (cond
-               (resource-path? file)
-               (to-resource file)
-
-               (or (url? file)
-                   (.isFile (clojure.java.io/file file)))
-               file)]
-        (print (slurp f))))))
+    (doseq [script scripts
+            :let [file (find-in-paths script)
+                  dir  (get-dir file)]]
+      (binding [*cwd* dir]
+        (if (nil? file) (throw+ {:known-error true
+                                 :msg
+                                 "File not found `" script "`"
+                                 :causes [script]}))
+        (let [f (if (resource-path? file)
+                  (to-resource file)
+                  file)]
+          (print (slurp f)))))))
 
 (defn tojs'
   "The low-level, stateful way to compile Chlorine source files. This function
 varies depending on states such as macros, temporary symbol count etc."
   [& scripts]
   (with-out-str
-    (doseq [script scripts]
-      ;; converts to absolute paths:
-      (let [[file dir] (file-and-dir script)
-            f (cond
-               (resource-path? file)
-               (to-resource file)
-
-               (or (url? file)
-                   (.isFile (clojure.java.io/file file)))
-               file)]
-        (binding [*cwd* dir]
-          (try+
-           (if (nil? f) (throw+ {:known-error true
-                                 :msg
-                                 "File not found `" file "`"
-                                 :causes [file]}))
+    (doseq [script scripts
+            :let [file (find-in-paths script)
+                  dir  (get-dir file)]]
+      (binding [*cwd* dir]
+        (try+
+         (if (nil? file) (throw+ {:known-error true
+                                  :msg
+                                  "File not found `" script "`"
+                                  :causes [script]}))
+         (let [f (if (resource-path? file)
+                   (to-resource file)
+                   file)]
            (with-open [in (sexp-reader f)]
              (loop [expr (read in false :eof)]
                (when (not= expr :eof)
                  (when-let [s (emit-statement expr)]
                    (print s))
-                 (recur (read in false :eof)))))
-           (catch map? e
-             (throw+ (merge e
-                            {:causes (conj (or (:causes e) [])
-                                           file)})))
-           (catch RuntimeException e
-             (if (= (.getMessage e) "EOF while reading")
-               (throw+ {:known-error true
-                        :msg (str "EOF while reading file "
-                                  file "\n"
-                                  "Maybe you've got mismatched parentheses,"
-                                  " brackets or braces.")
-                        :causes [file]
-                        :trace e})
-               (throw+ {:known-error false
-                        :msg (.getMessage e)
-                        :causes [file]
-                        :trace e})))
-           (catch Throwable e
+                 (recur (read in false :eof))))))
+         (catch map? e
+           (throw+ (merge e
+                          {:causes (conj (or (:causes e) [])
+                                         file)})))
+         (catch RuntimeException e
+           (if (= (.getMessage e) "EOF while reading")
+             (throw+ {:known-error true
+                      :msg (str "EOF while reading file "
+                                file "\n"
+                                "Maybe you've got mismatched parentheses,"
+                                " brackets or braces.")
+                      :causes [file]
+                      :trace e})
              (throw+ {:known-error false
                       :msg (.getMessage e)
                       :causes [file]
-                      :trace e}))))))))
+                      :trace e})))
+         )))))
 
 (defn tojs
   "The top-level, stateless way to compile Chlorine source files.
