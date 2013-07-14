@@ -6,6 +6,12 @@
 
 (dosync (ref-set *macros* {}))
 
+(deftest symbol-alias-tests
+  (is (= (binding [*aliases* (ref '{foo fool})]
+           (with-out-str
+             (emit-symbol 'foo)))
+         "fool")))
+
 (deftest detect-form-test
   (is (= (detect-form '(foo 1 :x))
          "foo"))
