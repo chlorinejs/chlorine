@@ -178,6 +178,23 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 ;; Symbols are Chlorine's amazing pieces. We have a wide range of valid
 ;; characters for Chlorine just like Clojure. You can use Lisp-style naming
 ;; conventions such as "?" endings for predicate functions.
+
+;; You can tell ChlorineJS to emit a symbol as if it's an other one by
+;; using aliases
+(def ^:dynamic *aliases*
+  (ref '{;; `int` and `boolean` are reserved symbols in js.
+         ;; They're also function names in Clojure and Chlorine core
+         ;; library.
+         int int*
+         boolean boolean*
+
+         ;; Chlorine uses a Clojure-like syntax of `(require ...)`
+         ;; to load nodejs/browserify. It's implemented as macro which
+         ;; expands to the lower level `require*`. `require*` in turn
+         ;; emitted as javascript `require()`
+         require* require
+         }))
+
 ;; Because javascript doesn't allow such characters, the function
 ;; `chlorine.util/replace-map` will be used to replace all Clojure-only
 ;; characters to javascript-friendly ones.
@@ -185,16 +202,6 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 ;; The mapping used to do the replacements
 (def ^:dynamic *symbol-map*
   (array-map
-   #"^boolean$" "boolean*"
-   ;; `int` is a reserved symbol name in js. It's also a function
-   ;; name in Clojure and Chlorine core library.
-   ;; `int` (the function) is emitted as `int*` instead
-   #"^int$" "int*"
-   ;; Chlorine uses a Clojure-like syntax of `(require ...)`
-   ;; to load nodejs/browserify. It's implemented as macro which
-   ;; expands to the lower level `require*`. `require*` in turn
-   ;; emitted as javascript `require()`
-   #"^require\*$" "require"
    "$"  "$USD$"
    "->" "$ARROW$"
    "=>" "$BARROW$"
@@ -231,7 +238,9 @@ javascript if the symbol isn't marked as reserved ones."
        (str "'" (name expr) "'")
        (if (reserved-symbol? *reserved-symbols* sym)
          sym
-         (replace-map sym *symbol-map*))))))
+         (-> (or (get @*aliases* expr)
+                 sym)
+             (replace-map *symbol-map*)))))))
 
 (defn emit-keyword
   "Emits Clojure keywords. Uses emit-symbol as backend."
@@ -428,9 +437,9 @@ and normal function calls."
      (when *print-pretty* (println "// defining macro" mname))
      (dosync
       (alter *macros*
-             conj
-             {(name mname)
-              (eval `(clojure.core/fn ~@mdeclrs))})))
+             assoc
+             (name mname)
+             (eval `(clojure.core/fn ~@mdeclrs)))))
    (catch Throwable e
      (throw+ {:known-error true
               :msg (str "Error defining macro `" mname "`:\n"
@@ -671,6 +680,11 @@ them instead of rewriting."
   (print " = ")
   (binding [*inline-if* true]
     (emit value)))
+
+(defmethod emit "alias" [[_ sym other]]
+  (when *print-pretty* (println "// alias" sym "as" other))
+  (dosync
+   (alter *aliases* assoc sym other)))
 
 ;; Macro expansions are useful in REPL.
 ;; macroexpand-1 and macroexpand work the like in Clojure except:
