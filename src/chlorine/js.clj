@@ -1132,16 +1132,18 @@ translate the Clojure subset `exprs' to a string of javascript code."
 
 (defn raw-script [& scripts]
   (with-out-str
-    (doseq [script scripts]
-      (let [[file dir] (file-and-dir script)
-            f (cond
-               (resource-path? file)
-               (to-resource file)
-
-               (or (url? file)
-                   (.isFile (clojure.java.io/file file)))
-               file)]
-        (print (slurp f))))))
+    (doseq [script scripts
+            :let [file (find-in-paths script)
+                  dir  (get-dir file)]]
+      (binding [*cwd* dir]
+        (if (nil? file) (throw+ {:known-error true
+                                 :msg
+                                 "File not found `" script "`"
+                                 :causes [script]}))
+        (let [f (if (resource-path? file)
+                  (to-resource file)
+                  file)]
+          (print (slurp f)))))))
 
 (defn tojs'
   "The low-level, stateful way to compile Chlorine source files. This function
