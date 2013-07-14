@@ -4,10 +4,11 @@
             [clojure.walk])
   (:use [chlorine.reader]
         [slingshot.slingshot]
-        [pathetic.core :only [normalize]]
-        [chlorine.util :only [url? resource-path? to-resource unzip assert-args
-                              *cwd* *cpd* file-and-dir
-                              re? replace-map]]))
+        [pathetic.core :only [normalize url-normalize]]
+        [chlorine.util
+         :only [url? resource-path? to-resource unzip assert-args
+                *cwd* *paths* get-dir find-in-paths
+                re? replace-map]]))
 
 (def ^:dynamic *print-pretty* false)
 
