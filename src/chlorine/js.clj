@@ -4,10 +4,11 @@
             [clojure.walk])
   (:use [chlorine.reader]
         [slingshot.slingshot]
-        [pathetic.core :only [normalize]]
-        [chlorine.util :only [url? resource-path? to-resource unzip assert-args
-                              *cwd* *cpd* file-and-dir
-                              re? replace-map]]))
+        [pathetic.core :only [normalize url-normalize]]
+        [chlorine.util
+         :only [url? resource-path? to-resource unzip assert-args
+                *cwd* *paths* get-dir find-in-paths
+                re? replace-map]]))
 
 (def ^:dynamic *print-pretty* false)
 
@@ -1131,66 +1132,60 @@ translate the Clojure subset `exprs' to a string of javascript code."
 
 (defn raw-script [& scripts]
   (with-out-str
-    (doseq [script scripts]
-      (let [[file dir] (file-and-dir script)
-            f (cond
-               (resource-path? file)
-               (to-resource file)
-
-               (or (url? file)
-                   (.isFile (clojure.java.io/file file)))
-               file)]
-        (print (slurp f))))))
+    (doseq [script scripts
+            :let [file (find-in-paths script)
+                  dir  (get-dir file)]]
+      (binding [*cwd* dir]
+        (if (nil? file) (throw+ {:known-error true
+                                 :msg
+                                 "File not found `" script "`"
+                                 :causes [script]}))
+        (let [f (if (resource-path? file)
+                  (to-resource file)
+                  file)]
+          (print (slurp f)))))))
 
 (defn tojs'
   "The low-level, stateful way to compile Chlorine source files. This function
 varies depending on states such as macros, temporary symbol count etc."
   [& scripts]
   (with-out-str
-    (doseq [script scripts]
-      ;; converts to absolute paths:
-      (let [[file dir] (file-and-dir script)
-            f (cond
-               (resource-path? file)
-               (to-resource file)
-
-               (or (url? file)
-                   (.isFile (clojure.java.io/file file)))
-               file)]
-        (binding [*cwd* dir]
-          (try+
-           (if (nil? f) (throw+ {:known-error true
-                                 :msg
-                                 "File not found `" file "`"
-                                 :causes [file]}))
+    (doseq [script scripts
+            :let [file (find-in-paths script)
+                  dir  (get-dir file)]]
+      (binding [*cwd* dir]
+        (try+
+         (if (nil? file) (throw+ {:known-error true
+                                  :msg
+                                  "File not found `" script "`"
+                                  :causes [script]}))
+         (let [f (if (resource-path? file)
+                   (to-resource file)
+                   file)]
            (with-open [in (sexp-reader f)]
              (loop [expr (read in false :eof)]
                (when (not= expr :eof)
                  (when-let [s (emit-statement expr)]
                    (print s))
-                 (recur (read in false :eof)))))
-           (catch map? e
-             (throw+ (merge e
-                            {:causes (conj (or (:causes e) [])
-                                           file)})))
-           (catch RuntimeException e
-             (if (= (.getMessage e) "EOF while reading")
-               (throw+ {:known-error true
-                        :msg (str "EOF while reading file "
-                                  file "\n"
-                                  "Maybe you've got mismatched parentheses,"
-                                  " brackets or braces.")
-                        :causes [file]
-                        :trace e})
-               (throw+ {:known-error false
-                        :msg (.getMessage e)
-                        :causes [file]
-                        :trace e})))
-           (catch Throwable e
+                 (recur (read in false :eof))))))
+         (catch map? e
+           (throw+ (merge e
+                          {:causes (conj (or (:causes e) [])
+                                         file)})))
+         (catch RuntimeException e
+           (if (= (.getMessage e) "EOF while reading")
+             (throw+ {:known-error true
+                      :msg (str "EOF while reading file "
+                                file "\n"
+                                "Maybe you've got mismatched parentheses,"
+                                " brackets or braces.")
+                      :causes [file]
+                      :trace e})
              (throw+ {:known-error false
                       :msg (.getMessage e)
                       :causes [file]
-                      :trace e}))))))))
+                      :trace e})))
+         )))))
 
 (defn tojs
   "The top-level, stateless way to compile Chlorine source files.
