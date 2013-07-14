@@ -437,9 +437,9 @@ and normal function calls."
      (when *print-pretty* (println "// defining macro" mname))
      (dosync
       (alter *macros*
-             conj
-             {(name mname)
-              (eval `(clojure.core/fn ~@mdeclrs))})))
+             assoc
+             (name mname)
+             (eval `(clojure.core/fn ~@mdeclrs)))))
    (catch Throwable e
      (throw+ {:known-error true
               :msg (str "Error defining macro `" mname "`:\n"
