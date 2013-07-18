@@ -12,6 +12,8 @@
 
 (def ^:dynamic *print-pretty* false)
 
+(def ^:dynamic *object-member* false)
+
 (defmacro with-pretty-print [& body]
   `(binding [*print-pretty* true]
      ~@body))
@@ -237,7 +239,8 @@ javascript if the symbol isn't marked as reserved ones."
     (print
      (if *quoted*
        (str "'" (name expr) "'")
-       (if (reserved-symbol? *reserved-symbols* sym)
+       (if (or (reserved-symbol? *reserved-symbols* sym)
+               *object-member*)
          sym
          (-> (or (get @*aliases* expr)
                  sym)
@@ -903,12 +906,15 @@ them instead of rewriting."
     (cond
      (symbol? key)
      (if (.startsWith (name key) "-")
-       (do (print (property->member key)))
-       (do (print (name key))
+       (binding [*object-member* true]
+         (emit (property->member key)))
+       (do (binding [*object-member* true]
+             (emit key))
            (with-parens []
              (with-indent [] (emit-delimited ", " args)))))
      (coll? key)
-     (do (emit (first key))
+     (do (binding [*object-member* true]
+           (emit (first key)))
          (with-parens []
            (with-indent [] (emit-delimited ", " (rest key))))))))
 
