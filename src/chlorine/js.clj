@@ -235,15 +235,15 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 name as a string. Does some replacements with characters not supported by
 javascript if the symbol isn't marked as reserved ones."
   [expr]
-  (let [sym (name expr)]
+  (let [sym-name (name expr)]
     (print
      (if *quoted*
        (str "'" (name expr) "'")
-       (if (or (reserved-symbol? *reserved-symbols* sym)
+       (if (or (reserved-symbol? *reserved-symbols* sym-name)
                *object-member*)
-         sym
-         (-> (or (get @*aliases* expr)
-                 sym)
+         sym-name
+         (-> (or (get @*aliases* (symbol sym-name))
+                 sym-name)
              (replace-map *symbol-map*)))))))
 
 (defn emit-keyword
