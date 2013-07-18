@@ -12,6 +12,20 @@
              (emit-symbol 'foo)))
          "fool")))
 
+(deftest no-alias-emiting-object-members-tests
+  (is (= (binding [*aliases* (ref '{foo fool})]
+           (js (. bar foo)))
+         "bar.foo()"))
+  (is (= (binding [*aliases* (ref '{foo fool})]
+           (js (. bar (foo 1 2))))
+         "bar.foo(1, 2)"))
+  (is (= (binding [*aliases* (ref '{foo fool})]
+           (js (foo :bar)))
+         "fool('bar')"))
+  (is (= (binding [*aliases* (ref '{foo fool})]
+           (js (get* foo boo-bar)))
+         "fool[boo_bar]")))
+
 (deftest alias-tests
   (is (= (binding [*aliases* (ref '{foo fool})]
            (js (alias boo bar))
