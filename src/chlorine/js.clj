@@ -230,6 +230,9 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 ;; `replace-map`.
 (def ^:dynamic *reserved-symbols* [#"^\$.*" #"^\.\$.*"])
 
+(def ^:dynamic *core-symbols* #{})
+(def ^:dynamic *core-symbols-in-use* (ref #{}))
+
 (defn emit-symbol
   "Emits Clojure symbols to javascript ones. If the symbol is quoted, emits its
 name as a string. Does some replacements with characters not supported by
@@ -239,12 +242,19 @@ javascript if the symbol isn't marked as reserved ones."
     (print
      (if *quoted*
        (str "'" (name expr) "'")
-       (if (or (reserved-symbol? *reserved-symbols* sym-name)
-               *object-member*)
-         sym-name
-         (-> (or (get @*aliases* (symbol sym-name))
-                 sym-name)
-             (replace-map *symbol-map*)))))))
+       (let [output-string
+             (if (or (reserved-symbol? *reserved-symbols* sym-name)
+                     *object-member*)
+               sym-name
+               (-> (or (get @*aliases* (symbol sym-name))
+                       sym-name)
+                   (replace-map *symbol-map*)))
+             output-sym (symbol output-string)]
+         (if (and (contains? *core-symbols* output-sym)
+                  (not (contains? @*core-symbols-in-use* output-sym)))
+           (dosync (alter *core-symbols-in-use*
+                          conj output-sym)))
+         output-string)))))
 
 (defn emit-keyword
   "Emits Clojure keywords. Uses emit-symbol as backend."

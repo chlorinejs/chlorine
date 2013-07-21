@@ -12,6 +12,15 @@
              (emit-symbol 'foo)))
          "fool")))
 
+(deftest track-emitted-symbols-tests
+  (is (= (binding [*core-symbols* '#{foo bar boo}
+                   *core-symbols-in-use* (ref '#{bazz})]
+           (emit-symbol 'foo)
+           (emit-symbol 'bar)
+           (emit-symbol 'no-thing)
+           @*core-symbols-in-use*)
+         '#{bazz foo bar})))
+
 (deftest no-alias-emiting-object-members-tests
   (is (= (binding [*aliases* (ref '{foo fool})]
            (js (. bar foo)))
