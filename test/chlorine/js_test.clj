@@ -177,10 +177,10 @@
          true)))
 
 (deftest property-access
-  (is (= (js (get* map :key))
-         "map['key']"))
-  (is (= (js (:key map))
-         "get(map, 'key')")))
+  (is (= (js (get* map :some-key))
+         "map.someKey"))
+  (is (= (js (:an-other-key map))
+         "get(map, 'anOtherKey')")))
 
 (deftest dot-form-test
   (is (= (js (. foo -bar))

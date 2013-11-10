@@ -902,9 +902,13 @@ them instead of rewriting."
 (defmethod emit "get*" [[_ map key]]
   (with-return-expr []
     (emit map)
-    (print "[")
-    (emit key)
-    (print "]")))
+    (if (keyword? key)
+      (do (print ".")
+          (binding [*quoted* false]
+            (emit-symbol key)))
+      (do (print "[")
+          (emit key)
+          (print "]")))))
 
 (defmethod emit "." [[_ object key & args]]
   (with-return-expr []
