@@ -6,6 +6,10 @@
 
 (dosync (ref-set *macros* {}))
 
+(deftest ->camelCase-test
+  (is (= (->camelCase "foo-bar-boo")
+         "fooBarBoo")))
+
 (deftest symbol-alias-tests
   (is (= (binding [*aliases* (ref '{foo fool})]
            (with-out-str

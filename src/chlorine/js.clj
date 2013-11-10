@@ -10,6 +10,10 @@
                 *cwd* *paths* get-dir find-in-paths
                 re? replace-map]]))
 
+(defn ->camelCase [^String method-name]
+  (str/replace method-name #"-(\w)"
+               #(str/upper-case (second %1))))
+
 (def ^:dynamic *print-pretty* false)
 
 (def ^:dynamic *object-member* false)
