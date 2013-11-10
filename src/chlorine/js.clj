@@ -227,7 +227,9 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
   (str/escape s {\- \_}))
 ;; You can also specify "reserved symbols", which are NOT affected by
 ;; `replace-map`.
-(def ^:dynamic *reserved-symbols* [#"^\$.*" #"^\.\$.*"])
+;; For example: [;;#"^\$.*" #"^\.\$.*"]
+
+(def ^:dynamic *reserved-symbols* [])
 
 (def ^:dynamic *core-symbols* #{})
 (def ^:dynamic *core-symbols-in-use* (ref #{}))
