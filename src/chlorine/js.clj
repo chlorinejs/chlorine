@@ -148,16 +148,22 @@ Keys can only be strings. Keywords and quoted symbols don't really make
        ","
        (seq expr)
        (fn [[key val]]
-         (if (valid-map-key? key)
-           (emit key)
-           (throw+ {:known-error true
-                    :msg
-                    (str "Error emitting this map `"
-                         expr "`:\n"
-                         "Invalid map key: `" key "`.\n"
-                         "Valid keys are elements which can be"
-                         " converted to strings.")
-                    :causes [expr key]}))
+         (cond
+          (keyword? key)
+          (emit-symbol key)
+
+          (valid-map-key? key)
+          (emit key)
+
+          :default
+          (throw+ {:known-error true
+                   :msg
+                   (str "Error emitting this map `"
+                        expr "`:\n"
+                        "Invalid map key: `" key "`.\n"
+                        "Valid keys are elements which can be"
+                        " converted to strings.")
+                   :causes [expr key]}))
          (print " : ")
          (emit val))))))
 

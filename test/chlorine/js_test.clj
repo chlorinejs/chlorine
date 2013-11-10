@@ -73,9 +73,9 @@
 
 (deftest emit-map-test
   (is (= (with-out-str (emit-map {:a 1 :b 2}))
-         "{'a' : 1,'b' : 2}"))
+         "{a : 1,b : 2}"))
   (is (= (with-out-str (emit-map {:a 1 "b" {'c 2}}))
-         "{\"b\" : {c : 2},'a' : 1}")))
+         "{\"b\" : {c : 2},a : 1}")))
 
 (deftest literals
   (is (= (js use-camel-case) "useCamelCase"))
@@ -86,7 +86,7 @@
   (is (= (js has-side-effect!) "hasSideEffect_s"))
   (is (= (js a->b) "aToB"))
 
-  (is (= (js {:foo 1 :bar 2 :baz 3}) "{'foo' : 1,'bar' : 2,'baz' : 3}"))
+  (is (= (js {:foo 1 :bar 2 :baz 3}) "{foo : 1,bar : 2,baz : 3}"))
   (is (= (js #{:foo :bar :baz}) "hashSet('foo', 'bar', 'baz')"))
   (is (= (js [:foo :bar :baz]) "['foo','bar','baz']"))
   (is (= (js \newline) "'\n'"))
@@ -96,7 +96,7 @@
   (is (= (js (+* 1 2 3)) "(1 + 2 + 3)"))
   (is (= (js (+* "foo" "bar" "baz")) "(\"foo\" + \"bar\" + \"baz\")"))
   (is (= (js (:test {:test 1 :foo 2 :bar 3}))
-         "get({'test' : 1,'foo' : 2,'bar' : 3}, 'test')"))
+         "get({test : 1,foo : 2,bar : 3}, 'test')"))
   (is (= (js (append '(:foo bar baz) '(quux)))
          "append(['foo','bar','baz'], ['quux'])"))
 
@@ -484,7 +484,7 @@
               " var x = 1, y = 2; return plus(x, y);  })();"
               " return 3; }")))
   (is (= (js (let [m {:test 1 :foo 2 :bar 3}] (list m 4)))
-         (str "(function () { var m = {'test' : 1,'foo' : 2,'bar' : 3};"
+         (str "(function () { var m = {test : 1,foo : 2,bar : 3};"
               " return list(m, 4);  })();"))))
 
 (deftest js-let-test
