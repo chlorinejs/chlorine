@@ -1,4 +1,4 @@
-(defproject chlorine "1.6.3"
+(defproject chlorine "1.6.4-SNAPSHOT"
   :description "A naive Clojure to Javascript translator"
   :url "http://github.com/chlorinejs/chlorine"
   :dependencies [[org.clojure/clojure "1.5.1"]
