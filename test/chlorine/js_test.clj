@@ -467,16 +467,16 @@
 (deftest let-tests
   (is (= (js (def x (let [y 3] y)))
          "var x = (function () { var y = 3; return y;  })()"))
-  (is (= (js (fn* [] (let [x 1 y 2] (+ x y))))
-         "function () { var x = 1, y = 2; return $PLUS$(x, y); }"))
-  (is (= (js (fn* [] (let [x 1 y 2] (+ x y)) 3))
+  (is (= (js (fn* [] (let [x 1 y 2] (plus x y))))
+         "function () { var x = 1, y = 2; return plus(x, y); }"))
+  (is (= (js (fn* [] (let [x 1 y 2] (plus x y)) 3))
          (str "function () {"
               " (function () {"
-              " var x = 1, y = 2; return $PLUS$(x, y);  })();"
+              " var x = 1, y = 2; return plus(x, y);  })();"
               " return 3; }")))
-  (is (= (js (let [m {:test 1 :foo 2 :bar 3}] (:baz m 4)))
+  (is (= (js (let [m {:test 1 :foo 2 :bar 3}] (list m 4)))
          (str "(function () { var m = {'test' : 1,'foo' : 2,'bar' : 3};"
-              " return get(m, 'baz', 4);  })();"))))
+              " return list(m, 4);  })();"))))
 
 (deftest js-let-test
   (is (= (js-let [a 2 b 3] (+* a b))
