@@ -97,6 +97,7 @@ most hardworking multi-method in chlorine library."
         form))
 
 (declare emit-str)
+(declare emit-symbol)
 (declare tojs')
 
 (defn sym->property
@@ -124,18 +125,6 @@ function arguments etc."
 
 ;; several functions to emit Clojure data of
 ;;  map, set, vector, regexp, symbol and keyword types
-(defn valid-map-key?
-  "Checks a map's key before emitting. Valid keys are elements which can be
-  converted to strings."
-  [key]
-  (or (string?  key)
-      (keyword? key)
-      (number?  key)
-      (symbol?  key)
-      (and (seq? key)
-           (= 2 (count key))
-           (= 'quote  (first key))
-           (symbol? (second key)))))
 
 (defn emit-map
   "Clojure maps are emitted to javascript key/value objects.
@@ -152,7 +141,8 @@ Keys can only be strings. Keywords and quoted symbols don't really make
           (keyword? key)
           (emit-symbol key)
 
-          (valid-map-key? key)
+          (or (string?  key)
+              (number?  key))
           (emit key)
 
           :default

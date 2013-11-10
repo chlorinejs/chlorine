@@ -74,8 +74,15 @@
 (deftest emit-map-test
   (is (= (with-out-str (emit-map {:a 1 :b 2}))
          "{a : 1,b : 2}"))
-  (is (= (with-out-str (emit-map {:a 1 "b" {'c 2}}))
-         "{\"b\" : {c : 2},a : 1}")))
+  (is (= (try+
+          (js
+           (with-out-str (emit-map {:a 1 "b" {'c 2}})))
+          (catch [:known-error true] e
+            (:msg e)))
+         (str "Error emitting this map `{(quote c) 2}`:\n"
+              "Invalid map key: `(quote c)`.\n"
+              "Valid keys are elements which can be converted "
+              "to strings."))))
 
 (deftest literals
   (is (= (js use-camel-case) "useCamelCase"))
