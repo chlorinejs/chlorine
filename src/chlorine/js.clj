@@ -210,6 +210,7 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
    "'" "_q"
    "!" "_s"
    "+"  "_plus"
+   "/"  "_divide"
    "="  "_eq"
    "->" "-to-"
    "<-" "-from-"
@@ -222,6 +223,8 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
    "&"  "-and-"
    ))
 
+(defn hyphen->underscore [s]
+  (str/escape s {\- \_}))
 ;; You can also specify "reserved symbols", which are NOT affected by
 ;; `replace-map`.
 (def ^:dynamic *reserved-symbols* [#"^\$.*" #"^\.\$.*"])
@@ -243,7 +246,8 @@ javascript if the symbol isn't marked as reserved ones."
              (-> (or (get @*aliases* (symbol sym-name))
                      sym-name)
                  (replace-map *symbol-map*)
-                 ->camelCase))
+                 ->camelCase
+                 hyphen->underscore))
            output-sym (symbol output-string)]
        (if (and (contains? *core-symbols* output-sym)
                 (not (contains? @*core-symbols-in-use* output-sym)))
