@@ -209,25 +209,21 @@ That means, both `(contains? 5 {:a 1 \"5\" 2})` and
 ;; The mapping used to do the replacements
 (def ^:dynamic *symbol-map*
   (array-map
-   "$"  "$USD$"
-   "->" "$ARROW$"
-   "=>" "$BARROW$"
-   "<-" "$LARROW$"
-   ">"  "$GT$"
-   "<"  "$LT$"
-   ">=" "$GE$"
-   "=<" "$LE$"
-   "-"  "_"
-   "'"   "$QUOT$"
-   "!"  "$EXCL$"
-   "?"  "$QUEST$"
-   "#"  "$HASH$"
+   "?" "_p"
+   "*" "__"
+   "'" "_q"
+   "!" "_s"
+   "+"  "_plus"
+   "="  "_eq"
+   "->" "-to-"
+   "<-" "-from-"
+   ">"  "-gt-"
+   "<"  "-lt-"
+   ">=" "-ge-"
+   "=<" "-le-"
+   "#"  "_h"
    "%"  "$P100$"
-   "&"  "$AND$"
-   "*"  "$STAR$"
-   "+"  "$PLUS$"
-   "="  "$EQ$"
-   "|"  "$PIPE$"
+   "&"  "-and-"
    ))
 
 ;; You can also specify "reserved symbols", which are NOT affected by
@@ -252,7 +248,8 @@ javascript if the symbol isn't marked as reserved ones."
                sym-name
                (-> (or (get @*aliases* (symbol sym-name))
                        sym-name)
-                   (replace-map *symbol-map*)))
+                   (replace-map *symbol-map*)
+                   ->camelCase))
              output-sym (symbol output-string)]
          (if (and (contains? *core-symbols* output-sym)
                   (not (contains? @*core-symbols-in-use* output-sym)))
