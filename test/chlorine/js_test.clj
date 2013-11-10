@@ -93,6 +93,8 @@
   (is (= (js has-side-effect!) "hasSideEffect_s"))
   (is (= (js a->b) "aToB"))
   (is (= (js -) "_"))
+  (is (= (js /) "_divide"))
+  (is (= (js (js-divide 1 2)) "(1 / 2)"))
   (is (= (js :foo?) "'foo_p'"))
 
   (is (= (js {:foo 1 :bar 2 :baz 3}) "{foo : 1,bar : 2,baz : 3}"))
@@ -464,7 +466,7 @@
   (is (= (js
           (fn* test []
             (try
-              (/ 5 0)
+              (js-divide 5 0)
               (catch ex
                   (console.log ex))
               (finally

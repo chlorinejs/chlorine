@@ -17,7 +17,7 @@
                     "bit-shift-left" "bit-shift-right"
                     "bit-shift-right-zero-fill"
                     "rem"
-                    "+*" "-*" "**" "/"
+                    "+*" "-*" "**" "js-divide"
                     ">" ">=" "<" "<="
                     "=="
                     "==="
