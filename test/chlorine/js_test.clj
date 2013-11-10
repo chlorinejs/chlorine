@@ -32,8 +32,8 @@
            (js (foo :bar)))
          "fool('bar')"))
   (is (= (binding [*aliases* (ref '{foo fool})]
-           (js (get* foo boo-bar)))
-         "fool[boo_bar]")))
+           (js (get* foo boo)))
+         "fool[boo]")))
 
 (deftest alias-tests
   (is (= (binding [*aliases* (ref '{foo fool})]
@@ -73,12 +73,16 @@
          "{\"b\" : {c : 2},'a' : 1}")))
 
 (deftest literals
-  (is (= (js *print-pretty*) "$STAR$print_pretty$STAR$"))
-  (is (= (js number?) "number$QUEST$"))
-  (is (= (js foo-bar-baz) "foo_bar_baz"))
-  (is (= (js inc!) "inc$EXCL$"))
+  (is (= (js use-camel-case) "useCamelCase"))
+  (is (= (js predicate?)  "predicate_p"))
+  (is (= (js *ear-muffs*) "__earMuffs__"))
+  (is (= (js special*)    "special__"))
+  (is (= (js with-quote') "withQuote_q"))
+  (is (= (js has-side-effect!) "hasSideEffect_s"))
+  (is (= (js a->b) "aToB"))
+
   (is (= (js {:foo 1 :bar 2 :baz 3}) "{'foo' : 1,'bar' : 2,'baz' : 3}"))
-  (is (= (js #{:foo :bar :baz}) "hash_set('foo', 'bar', 'baz')"))
+  (is (= (js #{:foo :bar :baz}) "hashSet('foo', 'bar', 'baz')"))
   (is (= (js [:foo :bar :baz]) "['foo','bar','baz']"))
   (is (= (js \newline) "'\n'"))
   (is (= (js \a) "'a'")))
@@ -386,8 +390,8 @@
   )
 
 (deftest inline-primitives
-  (is (= (js (fn* isac? [i c] (inline "i instanceof c")))
-         "function isac$QUEST$ (i, c) { return i instanceof c; }")))
+  (is (= (js (fn* foo [i c] (inline "i instanceof c")))
+         "function foo (i, c) { return i instanceof c; }")))
 
 (deftest case-tests
   (is (= (with-pretty-print (js (case answer 42 (bingo) 24 (tiny))))
