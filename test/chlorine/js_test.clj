@@ -92,6 +92,7 @@
   (is (= (js with-quote') "withQuote_q"))
   (is (= (js has-side-effect!) "hasSideEffect_s"))
   (is (= (js a->b) "aToB"))
+  (is (= (js :foo?) "'foo_p'"))
 
   (is (= (js {:foo 1 :bar 2 :baz 3}) "{foo : 1,bar : 2,baz : 3}"))
   (is (= (js #{:foo :bar :baz}) "hashSet('foo', 'bar', 'baz')"))

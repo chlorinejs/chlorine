@@ -236,21 +236,21 @@ javascript if the symbol isn't marked as reserved ones."
   [expr]
   (let [sym-name (name expr)]
     (print
-     (if *quoted*
-       (str "'" (name expr) "'")
-       (let [output-string
-             (if (or (reserved-symbol? *reserved-symbols* sym-name)
-                     *object-member*)
-               sym-name
-               (-> (or (get @*aliases* (symbol sym-name))
-                       sym-name)
-                   (replace-map *symbol-map*)
-                   ->camelCase))
-             output-sym (symbol output-string)]
-         (if (and (contains? *core-symbols* output-sym)
-                  (not (contains? @*core-symbols-in-use* output-sym)))
-           (dosync (alter *core-symbols-in-use*
-                          conj output-sym)))
+     (let [output-string
+           (if (or (reserved-symbol? *reserved-symbols* sym-name)
+                   *object-member*)
+             sym-name
+             (-> (or (get @*aliases* (symbol sym-name))
+                     sym-name)
+                 (replace-map *symbol-map*)
+                 ->camelCase))
+           output-sym (symbol output-string)]
+       (if (and (contains? *core-symbols* output-sym)
+                (not (contains? @*core-symbols-in-use* output-sym)))
+         (dosync (alter *core-symbols-in-use*
+                        conj output-sym)))
+       (if *quoted*
+         (format "'%s'" output-string)
          output-string)))))
 
 (defn emit-keyword
