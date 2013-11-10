@@ -439,11 +439,11 @@
          (str "switch (answer) {"
               " case \"text\": foo(); break;"
               " case (10 + 20): bingo(); break; }")))
-  (is (= (js (case answer 1 :one 2 :two :anything-else))
+  (is (= (js (case answer 1 :one 2 :two "anything else"))
          (str "switch (answer) {"
               " case 1: 'one'; break;"
               " case 2: 'two'; break;"
-              " default: 'anything-else'; }"))))
+              " default: \"anything else\"; }"))))
 
 (deftest do-test
   (is (= (with-pretty-print
