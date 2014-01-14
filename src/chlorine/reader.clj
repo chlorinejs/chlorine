@@ -43,3 +43,18 @@
         regexps (filter re? v)]
     (or (contains? (set strings) s)
         (some #(re-matches % s) regexps))))
+
+(defn member-form?
+  "Checks if a form is a property access or method call
+(a symbol starting with '.')"
+  [form-name]
+  (and (symbol? form-name) (= \. (first (name form-name)))))
+
+(defn new-object?
+  "Checks if a symbol is a new object call (a symbol ending with '.')"
+  [f]
+  (and (symbol? f) (= \. (last (name f)))))
+
+(defn will-output-nothing? [expr]
+  (and (coll? expr) (#{'defmacro 'load-js 'load-file 'load-file-macros}
+                     (first expr))))

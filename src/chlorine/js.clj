@@ -71,17 +71,6 @@ most hardworking multi-method in chlorine library."
   (let [expr (if (and (coll? expr) (seq expr)) (first expr) expr)]
     (if (symbol? expr) (name expr) expr)))
 
-(defn member-form?
-  "Checks if a form is a property access or method call
-(a symbol starting with '.')"
-  [form-name]
-  (and (symbol? form-name) (= \. (first (name form-name)))))
-
-(defn new-object?
-  "Checks if a symbol is a new object call (a symbol ending with '.')"
-  [f]
-  (and (symbol? f) (= \. (last (name f)))))
-
 (defn normalize-dot-form
   "Normalizes dot forms or new-object forms by removing \".\" from their
  beginnings or endings."
@@ -389,8 +378,7 @@ and normal function calls."
   [expr]
   (try+
    (binding [*inline-if* false]
-     (if (and (coll? expr) (#{'defmacro 'load-js 'load-file 'load-file-macros}
-                            (first expr)))
+     (if (will-output-nothing? expr)
        (emit expr)
        (do
          (newline-indent)
