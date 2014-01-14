@@ -35,12 +35,10 @@
      ~@body))
 
 (defmacro with-bracket-block [& body]
-  `(do
-     (print "{")
+  `(with-parens ["{" "}"]
      (with-block
        (with-indent [] ~@body))
-     (newline-indent)
-     (print "}")))
+     (newline-indent)))
 
 (defn newline-indent []
   (if *print-pretty*
