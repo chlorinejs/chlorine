@@ -58,3 +58,6 @@
 (defn will-output-nothing? [expr]
   (and (coll? expr) (#{'defmacro 'load-js 'load-file 'load-file-macros}
                      (first expr))))
+
+(defn require-no-trailing? [expr]
+  (and (coll? expr) (#{'do 'let 'let*} (first expr))))

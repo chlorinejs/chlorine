@@ -383,7 +383,7 @@ and normal function calls."
        (do
          (newline-indent)
          (emit expr)
-         (when-not (and (coll? expr) (#{'do 'let 'let*} (first expr)))
+         (when-not (require-no-trailing? expr)
            (print ";")))))
    (catch map? e
      (throw+ (merge e
