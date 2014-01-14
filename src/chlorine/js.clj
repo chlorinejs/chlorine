@@ -1023,11 +1023,9 @@ them instead of rewriting."
 
 (defmethod emit "do-while" [[_ test & body]]
   (binding [*return-expr* false]
-    (print "do {")
-    (with-indent []
+    (print "do ")
+    (with-bracket-block
       (emit-statements body))
-    (newline-indent)
-    (print "}")
     (print " while (")
     (emit test)
     (print ")")))
