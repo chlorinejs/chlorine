@@ -34,6 +34,13 @@
   `(binding [*in-block-exp?* true]
      ~@body))
 
+(defmacro with-bracket-block [& body]
+  `(do
+     (print "{")
+     (with-block ~@body)
+     (newline-indent)
+     (print "}")))
+
 (defn newline-indent []
   (if *print-pretty*
     (do
@@ -740,22 +747,18 @@ them instead of rewriting."
   (binding [*return-expr* false
             *inline-if* true]
     (emit test))
-  (print ") {")
-  (with-block
+  (print ") ")
+  (with-bracket-block
     (with-indent []
       (emit-statement consequent)))
-  (newline-indent)
-  (print "}")
   ;; alternate might be `0`, which js equates as `nil`
   (when-not (or (nil? alternate)
                 (= '(clojure.core/cond)
                    alternate))
-    (print " else {")
-    (with-block
+    (print " else ")
+    (with-bracket-block
       (with-indent []
-        (emit-statement alternate)))
-    (newline-indent)
-    (print "}")))
+        (emit-statement alternate)))))
 
 (defmethod emit "if" [[_ test consequent & [alternate]]]
   ;; emit consequent directly without printing checks

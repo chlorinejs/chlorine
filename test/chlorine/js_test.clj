@@ -147,7 +147,9 @@
                " var a = 2;"
                " return log((a * a));"
                "  })() }"
-               )))
+               ))))
+
+(deftest function-with-let-inside-tests
   (is (= (js
           (fn* test []
             (let [a 1] (log (** a a)))
