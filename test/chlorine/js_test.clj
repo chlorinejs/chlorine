@@ -173,12 +173,6 @@
   (is (= (normalize-dot-form 'F.)
          'F)))
 
-(deftest member-form?-tests
-  (is (= (member-form? '.foo)
-         true))
-  (is (= (member-form? '.-bar)
-         true)))
-
 (deftest property-access
   (is (= (js (get* map :some-key))
          "map.someKey"))
