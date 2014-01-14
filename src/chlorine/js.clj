@@ -938,27 +938,22 @@ them instead of rewriting."
         (emit-delimited " = " apair)))))
 
 (defmethod emit "try" [[_ expr & clauses]]
-  (print "try {")
-  (with-indent []
-    (with-block
-      (emit-statement expr)))
-  (newline-indent)
-  (print "}")
+  (print "try ")
+  (with-bracket-block
+    (emit-statement expr))
   (doseq [[clause & body] clauses]
     (case clause
       catch (let [[evar expr] body]
               (with-block
                 (print " catch (")
                 (emit-symbol evar)
-                (print ") {")
-                (with-indent [] (emit-statement expr))
-                (newline-indent)
-                (print "}")))
+                (print ") ")
+                (with-bracket-block
+                  (emit-statement expr))))
       finally (with-block
-                (print " finally {")
-                (with-indent [] (doseq [expr body] (emit-statement expr)))
-                (newline-indent)
-                (print "}")))))
+                (print " finally ")
+                (with-bracket-block
+                  (doseq [expr body] (emit-statement expr)))))))
 
 (def ^:dynamic *loop-vars* nil)
 
