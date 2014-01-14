@@ -7,6 +7,9 @@
   [source]
   (new java.io.PushbackReader (reader source)))
 
+(defn ignorable-arg? [n]
+  (and (symbol? n) (.startsWith (name n) "_")))
+
 (defn unary-operator? [op]
   (and (symbol? op) (contains? #{"++" "--" "!"} (name op))))
 
