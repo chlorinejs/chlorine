@@ -37,7 +37,8 @@
 (defmacro with-bracket-block [& body]
   `(do
      (print "{")
-     (with-block ~@body)
+     (with-block
+       (with-indent [] ~@body))
      (newline-indent)
      (print "}")))
 
@@ -1016,11 +1017,9 @@ them instead of rewriting."
   (binding [*return-expr* false]
     (print "while (")
     (emit test)
-    (print ") {")
-    (with-indent []
-      (emit-statements body))
-    (newline-indent)
-    (print "}")))
+    (print ") ")
+    (with-bracket-block
+      (emit-statements body))))
 
 (defmethod emit "do-while" [[_ test & body]]
   (binding [*return-expr* false]
