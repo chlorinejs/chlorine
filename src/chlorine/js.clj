@@ -1007,11 +1007,9 @@ them instead of rewriting."
     (emit lvar)
     (print " in ")
     (emit hash)
-    (print ") {")
-    (with-indent []
-      (emit-statements body))
-    (newline-indent)
-    (print "}")))
+    (print ") ")
+    (with-bracket-block
+      (emit-statements body))))
 
 (defmethod emit "while" [[_ test & body]]
   (binding [*return-expr* false]
