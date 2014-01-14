@@ -1037,11 +1037,9 @@ them instead of rewriting."
     (binding [*return-expr* false]
       (print "for (")
       (emit-statements [init test update])
-      (print ") {")
-      (with-indent []
-        (emit-statements body))
-      (newline-indent)
-      (print "}"))))
+      (print ") ")
+      (with-bracket-block
+        (emit-statements body)))))
 
 (defmethod emit "inline" [[_ js]]
   (with-return-expr []
