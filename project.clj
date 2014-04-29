@@ -4,6 +4,6 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [pathetic "0.4.0" :exclusions [org.clojure/clojure]]
                  [chlorine-utils "1.2.0"]
-                 [hiccup "1.0.5"]
+                 [hiccup "1.0.4"]
                  [slingshot "0.10.3"]
                  [org.clojure/tools.reader "0.8.3"]])
