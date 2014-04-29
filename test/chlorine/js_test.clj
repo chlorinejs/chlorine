@@ -51,9 +51,9 @@
   (is (= (detect-form '(foo 1 :x))
          "foo"))
   (is (= (detect-form 123)
-         123))
+         :default))
   (is (= (detect-form "foo")
-         "foo")))
+         :default)))
 
 (deftest sym->property-test
   (is (= (sym->property :a)
@@ -101,6 +101,9 @@
   (is (= (js #{:foo :bar :baz}) "hashSet('foo', 'bar', 'baz')"))
   (is (= (js [:foo :bar :baz]) "['foo','bar','baz']"))
   (is (= (js \newline) "'\n'"))
+  (is (= (js ".") "\".\""))
+  (is (= (js "defmacro") "\"defmacro\""))
+  (is (= (js ".abc") "\".abc\""))
   (is (= (js \a) "'a'")))
 
 (deftest functions
