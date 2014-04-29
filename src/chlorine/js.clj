@@ -75,7 +75,7 @@ for further processing. Used as dispatch function for chlorine.js/emit, the
 most hardworking multi-method in chlorine library."
   [expr]
   (let [expr (if (and (coll? expr) (seq expr)) (first expr) expr)]
-    (if (symbol? expr) (name expr) expr)))
+    (if (symbol? expr) (name expr) :default)))
 
 (defn normalize-dot-form
   "Normalizes dot forms or new-object forms by removing \".\" from their
